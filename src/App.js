@@ -1,24 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+import { useContext } from "react";
+import LoginChecker from "./components/passive/LoginChecker";
+import { LoadingContext } from "./providers/LoadingProvider";
+import GlobalLoading from "./components/global/global_Loading";
+import Sidebar from "./components/Sidebar";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <LoginChecker />
+
+      <Sidebar />
+      <p className="text-yellow-500">Hello, world</p>
+    </>
   );
 }
 

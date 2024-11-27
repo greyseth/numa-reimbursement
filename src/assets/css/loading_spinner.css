@@ -1,0 +1,25 @@
+.loading-spinner-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-spinner {
+  aspect-ratio: 1/1;
+  /* width set in component parameter */
+  height: auto;
+
+  border-radius: 50%;
+  display: inline-block;
+  animation: rotation 1s infinite forwards;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

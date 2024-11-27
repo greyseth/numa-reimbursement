@@ -1,17 +1,45 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./assets/css/index.css";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+import App from "./App";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Page_Auth from "./pages/Auth";
+import Page_404 from "./pages/404";
+import LoginProvider from "./providers/LoginProvider";
+import LoadingProvider from "./providers/LoadingProvider";
+import GlobalsContainer from "./components/global/GlobalContainer";
+import WarningProvider from "./providers/WarningProvider";
+import MobileProvider from "./providers/MobileProvider";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+  },
+  {
+    path: "/auth",
+    element: <Page_Auth />,
+  },
+  {
+    path: "*",
+    element: <Page_404 />,
+  },
+]);
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <LoadingProvider>
+      <WarningProvider>
+        <MobileProvider>
+          <LoginProvider>
+            <RouterProvider router={router} />
+
+            <GlobalsContainer />
+          </LoginProvider>
+        </MobileProvider>
+      </WarningProvider>
+    </LoadingProvider>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
