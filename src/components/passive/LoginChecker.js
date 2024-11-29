@@ -20,7 +20,6 @@ export default function LoginChecker() {
           if (!response.error) {
             setLoginData(response);
             setLoading({ loading: false, error: false, complete: false });
-            navigate("/");
           } else {
             setLoading({
               loading: false,

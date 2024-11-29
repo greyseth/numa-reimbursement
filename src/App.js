@@ -3,14 +3,24 @@ import LoginChecker from "./components/passive/LoginChecker";
 import { LoadingContext } from "./providers/LoadingProvider";
 import GlobalLoading from "./components/global/global_Loading";
 import Sidebar from "./components/Sidebar";
+import { Outlet } from "react-router-dom";
+import Header from "./components/Header";
+import InfoHover from "./components/InfoHover";
 
 function App() {
   return (
     <>
       <LoginChecker />
 
-      <Sidebar />
-      <p className="text-yellow-500">Hello, world</p>
+      <div className="app-container">
+        <Sidebar />
+        <div className="app-content">
+          <Header />
+          <div>
+            <Outlet />
+          </div>
+        </div>
+      </div>
     </>
   );
 }

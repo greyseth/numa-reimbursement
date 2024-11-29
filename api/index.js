@@ -4,7 +4,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const authenticateToken = require("./middlewares/authenticateToken");
-const generateToken = require("./util/generateToken");
+const verifyRole = require("./middlewares/verifyRole");
 
 dotenv.config();
 
@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
 app.use(authenticateToken);
+app.use(verifyRole);
 
 const usersRoute = require("./routes/users/users");
 app.use("/users", usersRoute);

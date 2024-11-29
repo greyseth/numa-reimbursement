@@ -4,10 +4,13 @@ import GlobalLoading from "./global_Loading";
 import { WarningContext } from "../../providers/WarningProvider";
 import GlobalWarning from "./global_Warning";
 import GlobalMobileChecker from "./global_MobileChecker";
+import { MessageContext } from "../../providers/MessageProvider";
+import InfoHover from "../InfoHover";
 
 export default function GlobalsContainer() {
   const { loading, setLoading } = useContext(LoadingContext);
   const { warning, setWarning } = useContext(WarningContext);
+  const { message, setMessage } = useContext(MessageContext);
 
   return (
     <>
@@ -30,6 +33,8 @@ export default function GlobalsContainer() {
           confirmAction={warning.confirmAction}
         />
       ) : null}
+
+      {message ? <InfoHover message={message} /> : null}
     </>
   );
 }

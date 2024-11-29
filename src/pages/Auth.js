@@ -43,6 +43,7 @@ export default function Page_Auth() {
           username: response.username,
           email: response.email,
           phone: response.phone,
+          role: response.role,
         });
 
         navigate("/");
@@ -118,7 +119,7 @@ export default function Page_Auth() {
             </div>
             <button
               type="submit"
-              className="btn secondary"
+              className="btn secondary full"
               onClick={handleLogin}
             >
               LOG IN

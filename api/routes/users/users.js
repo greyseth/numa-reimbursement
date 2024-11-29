@@ -8,10 +8,14 @@ router.use("/auth", authentication);
 router.get("/self", (req, res) => {
   connection.query(
     `
-        SELECT username, email, phone FROM users
+        SELECT 
+        users.username, users.email, users.phone, 
+        users.id_role, roles.role_name AS role 
+        FROM users
+        LEFT JOIN roles ON roles.id_role = users.id_role
         WHERE id_user = ?
     `,
-    [res.locals.id_user],
+    [req.id_user],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });
       if (rows.length < 1) return res.sendStatus(404);

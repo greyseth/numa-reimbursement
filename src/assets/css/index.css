@@ -6,7 +6,10 @@
 
 @layer components {
   .btn {
-    @apply w-full text-white py-3 rounded-lg font-medium text-sm;
+    @apply text-white p-3 rounded-lg font-medium text-sm;
+  }
+  .btn.full {
+    @apply w-full;
   }
   .btn.primary {
     @apply bg-primary hover:bg-gray-800;
@@ -55,8 +58,10 @@ input[type="number"] {
 .app-content {
   min-height: 100vh;
   overflow-y: scroll;
-  padding: 1em;
   padding-bottom: 0;
+}
+.app-content > div:not(:first-child) {
+  padding: 1em;
 }
 
 .dash-num.green {
