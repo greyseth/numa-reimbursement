@@ -1,6 +1,7 @@
 import logo from "../assets/img/numaLogo_transparent.png";
 
 import {
+  faBars,
   faClose,
   faFileText,
   faSignOut,
@@ -73,10 +74,10 @@ export default function Sidebar() {
       {isMobile && !isSidebarOpen && (
         <div className="fixed top-3 left-6 z-50 p-4">
           <FontAwesomeIcon
-            icon={faClose}
+            icon={faBars}
             className="text-2xl cursor-pointer hover:text-gray-500 transition duration-100"
             onClick={toggleSidebar}
-            color="white"
+            color="black"
           />
         </div>
       )}

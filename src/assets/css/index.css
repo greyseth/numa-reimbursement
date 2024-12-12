@@ -20,6 +20,13 @@
   .btn.tertiary {
     @apply bg-tertiary hover:bg-gray-800;
   }
+
+  .dropdown {
+    @apply p-2 bg-primary text-white rounded-lg;
+  }
+  .dropdown td {
+    @apply p-2;
+  }
 }
 
 :root {

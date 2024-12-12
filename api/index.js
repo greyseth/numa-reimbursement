@@ -17,7 +17,9 @@ app.use(authenticateToken);
 app.use(verifyRole);
 
 const usersRoute = require("./routes/users/users");
+const requestsRoute = require("./routes/requests/requests");
 app.use("/users", usersRoute);
+app.use("/requests", requestsRoute);
 
 app.get("/", (req, res) => {
   res.sendStatus(200);
