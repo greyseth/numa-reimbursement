@@ -15,7 +15,7 @@ const collapsedQuery = `
   `;
 
 router.post("/search/:page_num", (req, res) => {
-  let whereClause = "WHERE 1=1";
+  let optionalChecks = [];
 
   if (req.id_role === 1)
     whereClause = `WHERE requests.id_user = ?`; // USER role
@@ -24,29 +24,55 @@ router.post("/search/:page_num", (req, res) => {
   else if (req.id_role === 3)
     whereClause = `WHERE requests.status = 'approved'`; // FINANCE role
 
+  if (req.id_role === 1)
+    optionalChecks.push({
+      clause: "AND requests.id_user = ?",
+      value: req.id_user,
+    });
+  else if (req.id_role === 2)
+    optionalChecks.push({
+      clause: "AND requests.status == 'pending'",
+      value: null,
+    });
+  else if (req.id_role === 3)
+    optionalChecks.push({
+      clause: "AND requests.status = 'approved'",
+      value: null,
+    });
+
+  if (req.body.search)
+    optionalChecks.push({
+      clause: `AND MATCH(title, description) AGAINST (? IN NATURAL LANGUAGE MODE)`,
+      value: req.body.search,
+    });
+
+  if (req.body.days)
+    optionalChecks.push({
+      clause: `AND date_created > DATE_SUB(NOW(), INTERVAL ? DAY)`,
+      value: req.body.days,
+    });
+
+  let checkString = "";
+  optionalChecks.forEach((oc) => {
+    checkString += oc.clause;
+    checkString += "\n";
+  });
+
   connection.query(
     `
             ${collapsedQuery}
-            ${whereClause}
-            ${
-              req.body.search
-                ? `AND MATCH(title, description) AGAINST (? IN NATURAL LANGUAGE MODE)`
-                : ""
-            }
-            ${
-              req.body.days
-                ? `AND date_created > DATE_SUB(NOW(), INTERVAL ${req.body.days} DAY)`
-                : ""
-            }
+            WHERE 1=1
+            ${checkString}
             GROUP BY requests.id_request
-            ORDER BY requests.date_created ${req.body.orderBy ?? "DESC"}
-            LIMIT ${(req.params.page_num + 1) * 20};
-
+            ORDER BY requests.date_created ${
+              req.body.orderBy === "ASC" ? "ASC" : "DESC"
+            }
+            LIMIT 20
+            OFFSET ?
         `,
     [
-      req.id_user,
-      req.body.search ? req.body.search : null,
-      req.body.search ? req.body.search : null,
+      ...optionalChecks.map((oc) => oc.value).filter((oc) => oc),
+      (req.params.page_num - 1) * 20,
     ],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });

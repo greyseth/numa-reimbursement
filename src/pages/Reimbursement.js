@@ -11,6 +11,10 @@ import { LoadingContext } from "../providers/LoadingProvider";
 import { WarningContext } from "../providers/WarningProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
+import LoadingError from "../components/LoadingError";
+import request from "../util/API";
+import formatPrice from "../util/priceFormatter";
+import formatDate from "../util/dateFormatter";
 
 export default function Page_Reimbursement() {
   const { warning, setWarning } = useContext(WarningContext);
@@ -29,15 +33,24 @@ export default function Page_Reimbursement() {
 
   const [reimbursementsLoading, setReimbursementsLoading] = useState({
     loading: true,
-    error: false,
+    error: true,
   });
   const [reimbursements, setReimbursements] = useState([]);
 
-  async function fetchData() {}
+  async function fetchData() {
+    setReimbursementsLoading({ loading: true, error: false });
+
+    const response = await request("POST", "/requests/search/" + page, search);
+    if (response.error)
+      return setReimbursementsLoading({ loading: true, error: true });
+
+    setReimbursements(response);
+    setReimbursementsLoading({ loading: false, error: false });
+  }
 
   useEffect(() => {
     fetchData();
-  }, [search]);
+  }, [search, page]);
 
   return (
     <>
@@ -56,7 +69,12 @@ export default function Page_Reimbursement() {
       </div>
 
       {/* Search and filters */}
-      <SearchBar placeholder={"Search by name or description..."} />
+      <SearchBar
+        placeholder={"Search by name or description..."}
+        onSearch={(searchInput) =>
+          setSearch({ ...search, search: searchInput })
+        }
+      />
       <div className="space-x-2 mt-2 mb-6">
         <select
           className="dropdown"
@@ -84,86 +102,103 @@ export default function Page_Reimbursement() {
       <div className="w-full max-h-[600px] overflow-auto">
         {reimbursementsLoading.loading ? (
           reimbursementsLoading.error ? (
-            <></>
+            <LoadingError onRetry={fetchData} />
           ) : (
             <LoadingSpinner />
           )
         ) : (
           <>
-            <table className="min-w-full">
-              <thead className="bg-secondary">
-                <tr>
-                  <th>Request ID</th>
-                  <th>Request Title</th>
-                  <th>Uploader</th>
-                  <th>Total Price</th>
-                  <th>Request Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  className="text-center border-y-2 cursor-pointer"
-                  onClick={() => {}}
-                >
-                  <td>001</td>
-                  <td className="min-w-72">This is a request</td>
-                  <td className="min-w-32">Grey</td>
-                  <td className="min-w-32">Rp. 1,000,000</td>
-                  <td className="min-w-32">00/00/0000</td>
-                  <td className="min-w-32 p-2">
-                    <p className="p-2 font-bold bg-yellow-500 text-white rounded-full">
-                      PENDING
-                    </p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            {reimbursements.length > 0 ? (
+              <table className="min-w-full">
+                <thead className="bg-secondary">
+                  <tr>
+                    <th>Request ID</th>
+                    <th>Request Title</th>
+                    <th>Uploader</th>
+                    <th>Total Price</th>
+                    <th>Request Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reimbursements.map((r) => (
+                    <tr
+                      key={r.id_request}
+                      className="text-center border-y-2 cursor-pointer"
+                      onClick={() =>
+                        navigate(`/reimbursement/view/${r.id_request}`)
+                      }
+                    >
+                      <td>
+                        REQUEST_R{r.id_request.toString().padStart(4, "0")}
+                      </td>
+                      <td className="min-w-72">{r.title}</td>
+                      <td className="min-w-32">{r.username}</td>
+                      <td className="min-w-32">{formatPrice(r.total_price)}</td>
+                      <td className="min-w-32">{formatDate(r.date_created)}</td>
+                      <td className="min-w-32 p-2">
+                        <p
+                          className={`p-2 font-bold ${
+                            r.status === "pending"
+                              ? "bg-yellow-500"
+                              : "approved"
+                              ? "bg-blue-500"
+                              : "paid"
+                              ? "bg-green-500"
+                              : "bg-red-600"
+                          } text-white rounded-full`}
+                        >
+                          {r.status.toUpperCase()}
+                        </p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="w-full text-center font-bold">No Requests Found</p>
+            )}
 
             {/* Pagination controls */}
-            {reimbursements.length > 0 ? (
-              <>
-                <p className="w-full text-center font-bold mt-8 mb-2">
-                  Viewing Page
-                </p>
-                <div className="flex items-center justify-center">
-                  <FontAwesomeIcon
-                    icon={faLeftLong}
-                    color="blue"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      if (page <= 1) return;
-                      setPage((prevPage) => prevPage - 1);
-                      navigate("/reimbursement?page=" + (page - 1));
-                    }}
-                  />
-                  <input
-                    type="number"
-                    value={page}
-                    onChange={(e) => setPage(parseInt(e.target.value))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "Escape")
-                        navigate("/reimbursement?page=" + page);
-                    }}
-                    onBlur={(e) => {
-                      if (page < 0) setPage(1);
+            <p className="w-full text-center font-bold mt-8 mb-2">
+              Viewing Page
+            </p>
+            <div className="flex items-center justify-center mb-6">
+              <FontAwesomeIcon
+                icon={faLeftLong}
+                color="blue"
+                className="cursor-pointer"
+                onClick={() => {
+                  if (page <= 1) return;
+                  setPage((prevPage) => prevPage - 1);
+                  navigate("/reimbursement?page=" + (page - 1));
+                }}
+              />
+              <input
+                type="number"
+                value={page}
+                onChange={(e) => setPage(parseInt(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === "Escape")
+                    navigate("/reimbursement?page=" + page);
+                }}
+                onBlur={(e) => {
+                  if (page < 0) setPage(1);
 
-                      navigate("/reimbursement?page=" + page);
-                    }}
-                    className="w-8 text-center outline-none"
-                  />
-                  <FontAwesomeIcon
-                    icon={faRightLong}
-                    color="blue"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setPage((prevPage) => prevPage + 1);
-                      navigate("/reimbursement?page=" + (page + 1));
-                    }}
-                  />
-                </div>
-              </>
-            ) : null}
+                  navigate("/reimbursement?page=" + page);
+                }}
+                className="w-8 text-center outline-none"
+              />
+              <FontAwesomeIcon
+                icon={faRightLong}
+                color="blue"
+                className="cursor-pointer"
+                onClick={() => {
+                  setPage((prevPage) => prevPage + 1);
+                  navigate("/reimbursement?page=" + (page + 1));
+                }}
+              />
+            </div>
           </>
         )}
       </div>
