@@ -15,6 +15,7 @@ import MobileProvider from "./providers/MobileProvider";
 import Page_Reimbursement from "./pages/Reimbursement";
 import Page_Dashboard from "./pages/Dashboard";
 import MessageProvider from "./providers/MessageProvider";
+import Page_ReimbursementForm from "./pages/ReimbursementForm";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
           {
             path: "/reimbursement",
             element: <Page_Reimbursement />,
+          },
+          {
+            path: "/reimbursement/new",
+            element: <Page_ReimbursementForm />,
           },
         ],
       },

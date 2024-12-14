@@ -12,13 +12,20 @@
     @apply w-full;
   }
   .btn.primary {
-    @apply bg-primary hover:bg-gray-800;
+    @apply bg-primary enabled:hover:bg-gray-800 text-white;
   }
   .btn.secondary {
-    @apply bg-secondary hover:bg-gray-800 text-primary hover:text-white;
+    @apply bg-secondary enabled:hover:bg-gray-800 text-primary enabled:hover:text-white;
   }
   .btn.tertiary {
-    @apply bg-tertiary hover:bg-gray-800;
+    @apply bg-tertiary enabled:hover:bg-gray-800;
+  }
+  .btn.red {
+    @apply bg-red-700 enabled:hover:bg-red-500;
+  }
+
+  .btn:disabled {
+    @apply opacity-65;
   }
 
   .dropdown {
@@ -26,6 +33,14 @@
   }
   .dropdown td {
     @apply p-2;
+  }
+
+  .form-label {
+    @apply block mb-2 text-sm font-medium text-gray-900 text-black;
+  }
+
+  .form-input {
+    @apply block w-full p-2 rounded-lg focus:outline-none bg-text;
   }
 }
 

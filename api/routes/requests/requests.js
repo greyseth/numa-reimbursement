@@ -3,6 +3,7 @@ const connection = require("../../util/db");
 const requireRoles = require("../../middlewares/requireRoles");
 const requireParams = require("../../middlewares/requireParams");
 const { arrayUpload } = require("../../util/upload");
+const requireParamsAfter = require("../../middlewares/requireParamsAfter");
 
 const router = express.Router();
 
@@ -27,7 +28,11 @@ router.post("/search/:page_num", (req, res) => {
     `
             ${collapsedQuery}
             ${whereClause}
-            ${req.body.search ? `AND title LIKE ? OR description LIKE ?` : ""}
+            ${
+              req.body.search
+                ? `AND MATCH(title, description) AGAINST (? IN NATURAL LANGUAGE MODE)`
+                : ""
+            }
             ${
               req.body.days
                 ? `AND date_created > DATE_SUB(NOW(), INTERVAL ${req.body.days} DAY)`
@@ -40,8 +45,8 @@ router.post("/search/:page_num", (req, res) => {
         `,
     [
       req.id_user,
-      req.body.search ? `%${req.body.search}%` : null,
-      req.body.search ? `%${req.body.search}%` : null,
+      req.body.search ? req.body.search : null,
+      req.body.search ? req.body.search : null,
     ],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });
@@ -50,14 +55,11 @@ router.post("/search/:page_num", (req, res) => {
   );
 });
 
-router.post(
-  "/",
-  requireParams(["title", "items"]),
-  requireRoles(["user"]),
-  (req, res) => {
-    arrayUpload(req, res, (err) => {
-      if (err) return res.status(500).json({ error: err });
+router.post("/", requireRoles(["user"]), (req, res) => {
+  arrayUpload(req, res, (err) => {
+    if (err) return res.status(500).json({ error: err });
 
+    requireParamsAfter(req, res, ["items", "items"], () => {
       connection.beginTransaction((err) => {
         if (err)
           return connection.rollback(() =>
@@ -68,10 +70,10 @@ router.post(
         connection.query(
           `
                 INSERT INTO requests
-                (title, description, date_created)
-                VALUES (?, ?, NOW());
+                (title, description, date_created, id_user)
+                VALUES (?, ?, NOW(), ?);
             `,
-          [req.body.title, req.body.description ?? ""],
+          [req.body.title, req.body.description ?? "", req.id_user],
           (err, rows, fields) => {
             if (err)
               return connection.rollback(() =>
@@ -90,7 +92,7 @@ router.post(
               id_request,
               i.name,
               i.price,
-              i.date_purchased,
+              i.date,
               req.files[index].filename,
             ]);
             connection.query(
@@ -115,8 +117,8 @@ router.post(
         );
       });
     });
-  }
-);
+  });
+});
 
 // router.get('/id_request', (req, res) => {
 //     connection.query(

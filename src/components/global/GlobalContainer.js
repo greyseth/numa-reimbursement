@@ -21,6 +21,7 @@ export default function GlobalsContainer() {
           error={loading.error}
           complete={loading.complete}
           customMessage={loading.message}
+          onComplete={loading.onComplete}
         />
       ) : null}
 
