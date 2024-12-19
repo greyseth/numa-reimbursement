@@ -16,6 +16,7 @@ import formatDate from "../util/dateFormatter";
 import formatPrice from "../util/priceFormatter";
 import ImageViewer from "../components/popups/popup_ImageVIewer";
 import { verifyInput } from "../util/verifyInput";
+import ItemListItem from "../components/ItemListItem";
 
 export default function Page_ReimbursementForm() {
   const { loading, setLoading } = useContext(LoadingContext);
@@ -49,8 +50,6 @@ export default function Page_ReimbursementForm() {
         // Manual form and request creation because of images
         let formData = new FormData();
 
-        console.log("sometimes bad things take the place where good things go");
-
         formData.append("title", title);
         formData.append("description", description);
 
@@ -83,7 +82,7 @@ export default function Page_ReimbursementForm() {
               loading: true,
               complete: true,
               onComplete: () =>
-                navigate("/reimbursement/" + response.id_request),
+                navigate("/reimbursement/view/" + response.id_request),
             });
           else {
             console.log(response);
@@ -196,45 +195,5 @@ export default function Page_ReimbursementForm() {
         Submit Request
       </button>
     </>
-  );
-}
-
-function ItemListItem({ item, items, setItems, setViewImage }) {
-  const { warning, setWarning } = useContext(WarningContext);
-
-  function handleRemove() {
-    setItems((prevItems) => prevItems.filter((i) => i != item));
-  }
-
-  function viewImage() {
-    const itemIndex = items.findIndex((i) => i == item);
-
-    if (itemIndex !== -1) setViewImage(itemIndex);
-    else
-      setWarning({
-        headerMessage: "Something Went Wrong",
-        message: "Could not find item",
-        singleConfirm: true,
-      });
-  }
-
-  return (
-    <li className="min-w-full w-fit p-2 bg-white rounded-lg flex items-center gap-3 [&:not(:last-child)]:mb-3">
-      <p className="basis-0 grow min-w-36 md:min-w-96">{item.name}</p>
-      <p className="basis-0 growmin-w-36 md:min-w-64 text-wrap">
-        {formatPrice(item.price)}
-      </p>
-      <p className="basis-0 grow min-w-24 md:min-w-64">
-        {formatDate(item.date)}
-      </p>
-      <div className="flex items-center justify-end gap-2 min-w-24">
-        <button onClick={viewImage}>
-          <FontAwesomeIcon icon={faImage} size="2x" className="btn primary" />
-        </button>
-        <button onClick={handleRemove}>
-          <FontAwesomeIcon icon={faTrash} size="2x" className="btn red" />
-        </button>
-      </div>
-    </li>
   );
 }

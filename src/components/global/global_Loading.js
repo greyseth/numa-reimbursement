@@ -31,7 +31,7 @@ export default function GlobalLoading({
 
   return (
     <PopupContainer zIndex={999}>
-      <div className="bg-[#1D1C21] p-6 rounded-lg" style={{ width: "300px" }}>
+      <div className="bg-primary p-6 rounded-lg" style={{ width: "300px" }}>
         {error ? (
           <Error setLoading={setLoading} customMessage={customMessage} />
         ) : complete ? (

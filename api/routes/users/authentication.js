@@ -18,7 +18,7 @@ router.post(
       connection.query(
         `
         INSERT INTO users(username, email, password, phone, id_role)
-        VALUES(?, ?, ?, ?);
+        VALUES(?, ?, ?, ?, ?);
       `,
         [
           req.body.username,

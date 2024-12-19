@@ -8,8 +8,8 @@ const verifyRole = (req, res, next) => {
 
   connection.query(
     `
-        SELECT id_user, id_role FROM users WHERE id_user = ? AND id_role = ?
-        `,
+      SELECT id_user, id_role FROM users WHERE id_user = ? AND id_role = ?
+    `,
     [req.id_user, req.id_role],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });

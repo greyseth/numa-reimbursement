@@ -17,11 +17,20 @@
   .btn.secondary {
     @apply bg-secondary enabled:hover:bg-gray-800 text-primary enabled:hover:text-white;
   }
+  .btn.secondary.h-tertiary {
+    @apply enabled:hover:bg-tertiary;
+  }
   .btn.tertiary {
     @apply bg-tertiary enabled:hover:bg-gray-800;
   }
+  .btn.tertiary.h-secondary {
+    @apply enabled:hover:bg-secondary;
+  }
   .btn.red {
     @apply bg-red-700 enabled:hover:bg-red-500;
+  }
+  .btn.green {
+    @apply bg-green-700 enabled:hover:bg-green-500;
   }
 
   .btn:disabled {
@@ -49,6 +58,11 @@
   --primary-color: #1d1c21;
   --tertiary-color: #d1d5db;
   --secondary-color: #2d3746;
+}
+
+/* fuckin hack lmfao */
+.bg-red-500 {
+  background-color: red;
 }
 
 * {

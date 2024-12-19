@@ -80,7 +80,7 @@ export default function FileInput({ setValue, setDisplayValue, singleFile }) {
               </span>
             </p>
             {!hovering ? (
-              <p className="text-xs text-gray-500">PNG, JPG, JPEG, atau BMP</p>
+              <p className="text-xs text-gray-500">PNG, JPG, JPEG, or BMP</p>
             ) : null}
           </div>
           <input

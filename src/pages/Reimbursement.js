@@ -1,6 +1,7 @@
 import {
   faAdd,
   faLeftLong,
+  faReceipt,
   faRightLong,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -59,13 +60,20 @@ export default function Page_Reimbursement() {
         <h2 className="font-bold w-3/4 text-md md:text-xl">
           Reimbursement Request Management
         </h2>
-        <button
-          className="btn primary md:space-x-1"
-          onClick={() => navigate("/reimbursement/new")}
-        >
-          <span className="hidden md:inline">Add</span>{" "}
-          <FontAwesomeIcon icon={faAdd} color="white" />
-        </button>
+        {loginData && loginData.role === "user" ? (
+          <button
+            className="btn primary md:space-x-1"
+            onClick={() => navigate("/reimbursement/new")}
+          >
+            <span className="hidden md:inline">Add</span>{" "}
+            <FontAwesomeIcon icon={faAdd} color="white" />
+          </button>
+        ) : (
+          <button className="btn primary md:space-x-1" onClick={() => {}}>
+            <span className="hidden md:inline">Export</span>{" "}
+            <FontAwesomeIcon icon={faReceipt} color="white" />
+          </button>
+        )}
       </div>
 
       {/* Search and filters */}
@@ -141,9 +149,9 @@ export default function Page_Reimbursement() {
                           className={`p-2 font-bold ${
                             r.status === "pending"
                               ? "bg-yellow-500"
-                              : "approved"
+                              : r.status === "approved"
                               ? "bg-blue-500"
-                              : "paid"
+                              : r.status === "paid"
                               ? "bg-green-500"
                               : "bg-red-600"
                           } text-white rounded-full`}

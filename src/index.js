@@ -16,6 +16,7 @@ import Page_Reimbursement from "./pages/Reimbursement";
 import Page_Dashboard from "./pages/Dashboard";
 import MessageProvider from "./providers/MessageProvider";
 import Page_ReimbursementForm from "./pages/ReimbursementForm";
+import Page_ReimbursementView from "./pages/ReimbursementView";
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
           {
             path: "/reimbursement/new",
             element: <Page_ReimbursementForm />,
+          },
+          {
+            path: "/reimbursement/view/:id_request",
+            element: <Page_ReimbursementView />,
           },
         ],
       },

@@ -22,10 +22,13 @@ export default async function request(method, endpoint, body) {
         return await request.json();
     } else {
       const contentType = request.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1)
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const response = await request.json();
+        console.log(response);
         return {
-          error: { status: request.status, details: await request.json() },
+          error: { status: request.status, details: response },
         };
+      }
 
       return { error: { status: request.status } };
     }
