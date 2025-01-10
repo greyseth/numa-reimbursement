@@ -9,7 +9,7 @@ const requireRoles = require("../../middlewares/requireRoles");
 
 router.post(
   "/register",
-  requireParams(["username", "email", "password", "id_role"]),
+  requireParams(["username", "email", "password", "nik", "id_role"]),
   requireRoles(["admin"]),
   (req, res) => {
     encrypt.encryptPassword(req.body.password, (err, hash) => {
@@ -17,14 +17,14 @@ router.post(
 
       connection.query(
         `
-        INSERT INTO users(username, email, password, phone, id_role)
+        INSERT INTO users(username, email, password, nik, id_role)
         VALUES(?, ?, ?, ?, ?);
       `,
         [
           req.body.username,
           req.body.email,
           hash,
-          req.body.phone ?? "",
+          req.body.nik,
           req.body.id_role,
         ],
         (err, rows, fields) => {
@@ -40,7 +40,7 @@ router.post("/login", requireParams(["email", "password"]), (req, res) => {
   connection.query(
     `
       SELECT 
-      users.id_user, users.username, users.email, users.phone, users.password,
+      users.id_user, users.username, users.email, users.password,
       roles.id_role, roles.role_name AS role 
       FROM users
       LEFT JOIN roles ON roles.id_role = users.id_role
@@ -61,6 +61,7 @@ router.post("/login", requireParams(["email", "password"]), (req, res) => {
           res.status(200).json({
             success: true,
             auth_token: generateToken(rows[0].id_user, rows[0].id_role),
+            id_user: rows[0].id_user,
             username: rows[0].username,
             email: rows[0].email,
             phone: rows[0].phone,

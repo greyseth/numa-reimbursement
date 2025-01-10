@@ -16,6 +16,7 @@ import LoadingError from "../components/LoadingError";
 import request from "../util/API";
 import formatPrice from "../util/priceFormatter";
 import formatDate from "../util/dateFormatter";
+import CreateExport from "../components/popups/popup_CreateExport";
 
 export default function Page_Reimbursement() {
   const { warning, setWarning } = useContext(WarningContext);
@@ -29,6 +30,7 @@ export default function Page_Reimbursement() {
     search: "",
     days: undefined,
     orderBy: undefined,
+    type: undefined,
   });
   const [page, setPage] = useState(queryParams.get("page") ?? 1);
 
@@ -37,6 +39,8 @@ export default function Page_Reimbursement() {
     error: true,
   });
   const [reimbursements, setReimbursements] = useState([]);
+
+  const [exportPopup, setExportPopup] = useState(false);
 
   async function fetchData() {
     setReimbursementsLoading({ loading: true, error: false });
@@ -55,6 +59,8 @@ export default function Page_Reimbursement() {
 
   return (
     <>
+      {exportPopup ? <CreateExport setClose={setExportPopup} /> : null}
+
       {/* Page header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-bold w-3/4 text-md md:text-xl">
@@ -69,7 +75,10 @@ export default function Page_Reimbursement() {
             <FontAwesomeIcon icon={faAdd} color="white" />
           </button>
         ) : (
-          <button className="btn primary md:space-x-1" onClick={() => {}}>
+          <button
+            className="btn primary md:space-x-1"
+            onClick={() => setExportPopup(true)}
+          >
             <span className="hidden md:inline">Export</span>{" "}
             <FontAwesomeIcon icon={faReceipt} color="white" />
           </button>
@@ -101,6 +110,15 @@ export default function Page_Reimbursement() {
         >
           <option value={"DESC"}>Newest</option>
           <option value={"ASC"}>Oldest</option>
+        </select>
+        <select
+          className="dropdown"
+          value={search.type}
+          onChange={(e) => setSearch({ ...search, type: e.target.value })}
+        >
+          <option value={""}>All Requests</option>
+          <option value={"transfer"}>Transfer</option>
+          <option value={"petty cash"}>Petty Cash</option>
         </select>
       </div>
 
@@ -138,7 +156,8 @@ export default function Page_Reimbursement() {
                       }
                     >
                       <td>
-                        REQUEST_R{r.id_request.toString().padStart(4, "0")}
+                        REQUEST_{r.type === "petty cash" ? "PC" : "R"}
+                        {r.id_request.toString().padStart(4, "0")}
                       </td>
                       <td className="min-w-72">{r.title}</td>
                       <td className="min-w-32">{r.username}</td>

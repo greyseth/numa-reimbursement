@@ -17,9 +17,9 @@ app.get("/img/:filename", async (req, res) => {
   });
 });
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(helmet());
 app.use(authenticateToken);
 app.use(verifyRole);
@@ -27,9 +27,11 @@ app.use(verifyRole);
 const usersRoute = require("./routes/users/users");
 const requestsRoute = require("./routes/requests/requests");
 const approvalRoute = require("./routes/requests/requests_approval");
+const exportRoute = require("./routes/requests/requests_export");
 app.use("/users", usersRoute);
 app.use("/requests", requestsRoute);
 app.use("/requests/approve", approvalRoute);
+app.use("/requests/export", exportRoute);
 
 app.get("/", (req, res) => {
   res.sendStatus(200);

@@ -13,6 +13,10 @@ import { LoginContext } from "../providers/LoginProvider";
 import ApproveItemPopup from "../components/popups/popup_ApproveItem";
 import FileInput from "../components/FileInput";
 import ViewApprovalPopup from "../components/popups/popup_ViewApproval";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit } from "@fortawesome/free-solid-svg-icons";
+import RequestEditDetails from "../components/popups/popup_EditRequestDetails";
+import RequestEditItems from "../components/popups/popup_EditRequestItems";
 
 export default function Page_ReimbursementView() {
   const { loading, setLoading } = useContext(LoadingContext);
@@ -22,13 +26,13 @@ export default function Page_ReimbursementView() {
 
   const [detailsLoading, setDetailsLoading] = useState({
     loading: true,
-    error: true,
   });
   const [details, setDetails] = useState({});
 
   const [viewImage, setViewImage] = useState(undefined);
   const [approveItem, setApproveItem] = useState(undefined);
   const [viewApproval, setViewApproval] = useState(undefined);
+  const [openEdit, setOpenEdit] = useState({});
 
   const [financeNote, setFinanceNote] = useState("");
   const [financeFile, setFinanceFile] = useState(undefined);
@@ -72,15 +76,26 @@ export default function Page_ReimbursementView() {
         }
       );
 
-      if (request.ok)
+      if (request.ok) {
+        const response = await request.json();
+
         setLoading({
           loading: true,
           complete: true,
           onComplete: () => {
-            // TODO: Update view to match new approval status
+            setDetails({
+              ...details,
+              finance: {
+                ...response,
+                user: {
+                  username: loginData.username,
+                  email: loginData.email,
+                },
+              },
+            });
           },
         });
-      else {
+      } else {
         console.log(request);
         setLoading({ loading: true, error: true });
       }
@@ -88,8 +103,6 @@ export default function Page_ReimbursementView() {
       console.log(err);
       setLoading({ error: true });
     }
-
-    setLoading({ loading: false });
   }
 
   return (
@@ -124,24 +137,21 @@ export default function Page_ReimbursementView() {
         <ViewApprovalPopup approval={viewApproval} setClose={setViewApproval} />
       )}
 
-      <h2 className="font-bold w-3/4 text-md md:text-xl mb-4">
-        Viewing Request R{id_request.toString().padStart(4, "0")}
-        {details.request ? (
-          <span
-            className={`bg-${
-              details.request.status === "pending"
-                ? "yellow"
-                : details.request.status === "approved"
-                ? "blue"
-                : details.request.status === "paid"
-                ? "green"
-                : "red"
-            }-500 p-2 ml-4 rounded-full font-bold text-white`}
-          >
-            {details.request.status.toUpperCase()}
-          </span>
-        ) : null}
-      </h2>
+      {openEdit.details ? (
+        <RequestEditDetails
+          details={details}
+          setDetails={setDetails}
+          setClose={setOpenEdit}
+        />
+      ) : null}
+
+      {openEdit.items ? (
+        <RequestEditItems
+          details={details}
+          setDetails={setDetails}
+          setClose={setOpenEdit}
+        />
+      ) : null}
 
       {detailsLoading.loading ? (
         detailsLoading.error ? (
@@ -151,11 +161,40 @@ export default function Page_ReimbursementView() {
         )
       ) : (
         <>
+          <h2 className="font-bold w-3/4 text-md md:text-xl mb-4">
+            Viewing Request {details.request.type === "petty cash" ? "PC" : "R"}
+            {id_request.toString().padStart(4, "0")}
+            <span
+              className={`bg-${
+                details.request.status === "pending"
+                  ? "yellow"
+                  : details.request.status === "approved"
+                  ? "blue"
+                  : details.request.status === "paid"
+                  ? "green"
+                  : "red"
+              }-500 p-2 ml-4 rounded-full font-bold text-white`}
+            >
+              {details.request.status.toUpperCase()}
+            </span>
+          </h2>
+
           {/* General Request Details */}
           <div className="bg-gray-200 border rounded-lg p-6 mb-8">
-            <h2 className="font-semibold text-xl mb-4 text-black">
-              Request Details
-            </h2>
+            <div className="mb-4 flex justify-start items-center gap-4">
+              <h2 className="font-semibold text-xl text-black">
+                Request Details
+              </h2>
+              {details.user &&
+              loginData &&
+              loginData.id_user === details.user.id_user ? (
+                <FontAwesomeIcon
+                  icon={faEdit}
+                  className="text-lg cursor-pointer"
+                  onClick={() => setOpenEdit({ details: true })}
+                />
+              ) : null}
+            </div>
             <hr className="my-4 border-gray-300" />
 
             <div className="grid grid-cols-2 gap-4 text-sm font-semibold">
@@ -169,6 +208,7 @@ export default function Page_ReimbursementView() {
                   style={{ resize: "none" }}
                   readOnly
                   className="bg-transparent w-full outline-none"
+                  placeholder="No description provided"
                 >
                   {details.request.description}
                 </textarea>
@@ -177,11 +217,23 @@ export default function Page_ReimbursementView() {
                 <p className="font-normal text-gray-600">Date Requested</p>{" "}
                 {formatDate(details.request.date_created)}
               </div>
+              {details.request.date_updated ? (
+                <div>
+                  <p className="font-normal text-gray-600">Last Updated</p>{" "}
+                  {formatDate(details.request.date_updated)}
+                </div>
+              ) : null}
               <div>
                 <p className="font-normal text-gray-600">
                   Total Reimbursement Amount
                 </p>{" "}
                 {formatPrice(details.request.total_price)}
+              </div>
+              <div>
+                <p className="font-normal text-gray-600">
+                  Reimbursement Repayment Type
+                </p>{" "}
+                {details.request.type}
               </div>
             </div>
           </div>
@@ -203,17 +255,37 @@ export default function Page_ReimbursementView() {
                 {details.user.email}
               </div>
               <div>
-                <p className="font-normal text-gray-600">Phone Number</p>{" "}
-                {details.user.phone}
+                <p className="font-normal text-gray-600">NIK Number</p>{" "}
+                {details.user.nik}
+              </div>
+              <div></div>
+              <div>
+                <p className="font-normal text-gray-600">Repayment Bank</p>{" "}
+                {details.request.bank_name}
+              </div>
+              <div>
+                <p className="font-normal text-gray-600">Bank Number</p>{" "}
+                {details.request.bank_number}
               </div>
             </div>
           </div>
 
           {/* Items List */}
           <div className="bg-gray-200 border rounded-lg p-6 mb-8">
-            <h2 className="font-semibold text-xl mb-4 text-black">
-              Request Items
-            </h2>
+            <div className="mb-4 flex justify-start items-center gap-4">
+              <h2 className="font-semibold text-xl text-black">
+                Request Items
+              </h2>
+              {details.user &&
+              loginData &&
+              loginData.id_user === details.user.id_user ? (
+                <FontAwesomeIcon
+                  icon={faEdit}
+                  className="text-lg cursor-pointer"
+                  onClick={() => setOpenEdit({ items: true })}
+                />
+              ) : null}
+            </div>
             <hr className="my-4 border-gray-300" />
 
             <ul className="list-none max-h-64 overflow-y-scroll overflow-x-scroll rounded-lg">

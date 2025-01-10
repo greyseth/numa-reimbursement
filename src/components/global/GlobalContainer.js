@@ -31,6 +31,7 @@ export default function GlobalsContainer() {
           message={warning.message}
           singleConfirm={warning.singleConfirm}
           confirmDanger={warning.confirmDanger}
+          cancelAction={warning.cancelAction}
           confirmAction={warning.confirmAction}
         />
       ) : null}

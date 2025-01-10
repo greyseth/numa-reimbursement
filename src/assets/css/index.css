@@ -6,7 +6,7 @@
 
 @layer components {
   .btn {
-    @apply text-white p-3 rounded-lg font-medium text-sm;
+    @apply text-white p-3 rounded-lg font-medium text-sm select-none;
   }
   .btn.full {
     @apply w-full;

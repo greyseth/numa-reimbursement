@@ -1,3 +1,4 @@
+const util = require("node:util");
 const express = require("express");
 const connection = require("../../util/db");
 const requireRoles = require("../../middlewares/requireRoles");
@@ -6,6 +7,9 @@ const { arrayUpload } = require("../../util/upload");
 const requireParamsAfter = require("../../middlewares/requireParamsAfter");
 
 const router = express.Router();
+
+const exportRoute = require("./requests_export");
+router.use("/export", exportRoute);
 
 const collapsedQuery = `
   SELECT requests.*, users.username, SUM(items.price) AS total_price
@@ -48,6 +52,12 @@ router.post("/search/:page_num", (req, res) => {
       value: req.body.days,
     });
 
+  if (req.body.type)
+    optionalChecks.push({
+      clause: `AND type = ?`,
+      value: req.body.type,
+    });
+
   let checkString = "";
   optionalChecks.forEach((oc) => {
     checkString += oc.clause;
@@ -81,7 +91,8 @@ router.post("/", requireRoles(["user"]), (req, res) => {
   arrayUpload(req, res, (err) => {
     if (err) return res.status(500).json({ error: err });
 
-    requireParamsAfter(req, res, ["items", "items"], () => {
+    // idk if the double "items" was a mistake, but i dont really care atp it just fucking works man
+    requireParamsAfter(req, res, ["title", "type", "items", "items"], () => {
       connection.beginTransaction((err) => {
         if (err)
           return connection.rollback(() =>
@@ -92,10 +103,17 @@ router.post("/", requireRoles(["user"]), (req, res) => {
         connection.query(
           `
             INSERT INTO requests
-              (title, description, date_created, id_user)
-            VALUES (?, ?, NOW(), ?);
+              (title, description, type, date_created, id_user, bank_number, bank_name)
+            VALUES (?, ?, ?, NOW(), ?, ?, ?);
           `,
-          [req.body.title, req.body.description ?? "", req.id_user],
+          [
+            req.body.title,
+            req.body.description ?? "",
+            req.body.type,
+            req.id_user,
+            req.body.bankNumber,
+            req.body.bankName,
+          ],
           (err, rows, fields) => {
             if (err)
               return connection.rollback(() =>
@@ -142,13 +160,78 @@ router.post("/", requireRoles(["user"]), (req, res) => {
   });
 });
 
+const monthNames = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+router.get("/yearly", (req, res) => {
+  connection.query(
+    `
+      SELECT MONTH(requests.date_created) AS month, SUM(items.price) AS amount
+      FROM requests
+      LEFT JOIN items ON items.id_request = requests.id_request
+      WHERE requests.type = 'transfer'
+      ORDER BY requests.date_created ASC;
+    `,
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err });
+      const transferData = rows[0].amount ? rows : [];
+
+      connection.query(
+        `
+          SELECT MONTH(requests.date_created) AS month, SUM(items.price) AS amount
+          FROM requests
+          LEFT JOIN items ON items.id_request = requests.id_request
+          WHERE requests.type = 'petty cash'
+          ORDER BY requests.date_created ASC;
+        `,
+        (err, rows) => {
+          if (err) return res.status(500).json({ error: err });
+          const pettyData = rows[0].amount ? rows : [];
+
+          res.status(200).json({
+            transfer: monthNames.map((month, i) => {
+              let returnData = { month: month, amount: 0 };
+
+              transferData.forEach((td) => {
+                if (td.month === i + 1)
+                  returnData = { month: month, amount: td.amount };
+              });
+
+              return returnData;
+            }),
+            petty: monthNames.map((month, i) => {
+              let returnData = { month: month, amount: 0 };
+
+              pettyData.forEach((td) => {
+                if (td.month === i + 1)
+                  returnData = { month: month, amount: td.amount };
+              });
+
+              return returnData;
+            }),
+          });
+        }
+      );
+    }
+  );
+});
+
 router.get("/:id_request", (req, res) => {
-  // TODO-done: Update endpoint to also incude approval (once item approvals are done)
   connection.query(
     `
         SELECT requests.*, SUM(items.price) AS total_price, 
           users.id_user AS requestor_id, users.username AS requestor_name, 
-          users.email AS requestor_email, users.phone AS requestor_phone,
+          users.email AS requestor_email, users.nik AS requestor_nik,
           finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
           finance.username AS finance_name, finance.email AS finance_email
         FROM requests
@@ -168,14 +251,15 @@ router.get("/:id_request", (req, res) => {
 
       let requestDetails = {};
       Object.keys(rows[0]).forEach((k) => {
-        if (!k.startsWith("requestor_")) requestDetails[k] = rows[0][k];
+        if (!k.startsWith("requestor_") && !k.startsWith("finance_"))
+          requestDetails[k] = rows[0][k];
       });
 
       let userDetails = {
         id_user: rows[0].requestor_id,
         username: rows[0].requestor_name,
         email: rows[0].requestor_email,
-        phone: rows[0].requestor_phone,
+        nik: rows[0].requestor_nik,
       };
 
       let financeApproval = {
@@ -243,5 +327,159 @@ router.get("/:id_request", (req, res) => {
     }
   );
 });
+
+router.put(
+  "/:id_request/details",
+  requireRoles(["user", "admin"]),
+  requireParams(["title", "bank_name", "bank_number", "type"]),
+  async (req, res) => {
+    // Params: {title: '', description: ''}
+
+    let authorized = false;
+
+    if (req.id_role === 4) authorized = true;
+
+    // Checks if user created the request
+    if (req.id_role === 1) {
+      const query = util.promisify(connection.query).bind(connection);
+      const checkResult = await query(
+        "SELECT id_user FROM requests WHERE id_request = " +
+          req.params.id_request
+      );
+
+      if (checkResult.length < 1)
+        return res.status(404).json({ error: "id_request not found" });
+      if (req.id_user === checkResult[0].id_user) authorized = true;
+    }
+
+    if (!authorized)
+      return res.status(401).json({ error: "Unauthorized access" });
+
+    connection.query(
+      `UPDATE requests SET title = ?, description = ?, bank_name = ?, bank_number = ?, type = ?, date_updated = NOW() WHERE id_request = ?`,
+      [
+        req.body.title,
+        req.body.description ?? "",
+        req.body.bank_name,
+        req.body.bank_number,
+        req.body.type,
+        req.params.id_request,
+      ],
+      (err, rows, fields) => {
+        if (err) return res.status(500).json({ error: err });
+        res.sendStatus(200);
+      }
+    );
+  }
+);
+
+router.put(
+  "/:id_request/items",
+  requireRoles(["user", "admin"]),
+  async (req, res) => {
+    // Parameters: {toDelete: JSONarray, toAdd: JSONarray, images: files}
+
+    let authorized = false;
+
+    if (req.id_role === 4) authorized = true;
+
+    // Checks if user created the request
+    if (req.id_role === 1) {
+      const query = util.promisify(connection.query).bind(connection);
+      const checkResult = await query(
+        "SELECT id_user FROM requests WHERE id_request = " +
+          req.params.id_request
+      );
+
+      if (checkResult.length < 1)
+        return res.status(404).json({ error: "id_request not found" });
+      if (req.id_user === checkResult[0].id_user) authorized = true;
+    }
+
+    if (!authorized)
+      return res.status(401).json({ error: "Unauthorized access" });
+
+    arrayUpload(req, res, (err) => {
+      if (err) return res.status(500).json({ error: err });
+
+      connection.beginTransaction((err) => {
+        if (err) return res.status(500).json({ error: err });
+
+        // Deletes items
+        const deleteItems = JSON.parse(req.body.toDelete);
+        connection.query(
+          deleteItems.length > 0
+            ? `DELETE FROM items WHERE id_item IN (?)`
+            : "SELECT NULL",
+          [deleteItems],
+          (err, rows, fields) => {
+            if (err)
+              return connection.rollback(() =>
+                res.status(500).json({ error: err })
+              );
+
+            //Inserts new items
+            const items = JSON.parse(req.body.toAdd).map((i, ii) => [
+              req.params.id_request,
+              i.name,
+              i.price,
+              i.date,
+              req.files[ii].filename,
+            ]);
+            connection.query(
+              items.length > 0
+                ? `INSERT INTO items(id_request, name, price, date_purchased, filename) VALUES ?`
+                : "SELECT NULL",
+              [items],
+              (err, rows, fields) => {
+                if (err)
+                  return connection.rollback(() =>
+                    res.status(500).json({ error: err })
+                  );
+
+                res.sendStatus(200);
+              }
+            );
+          }
+        );
+      });
+    });
+  }
+);
+
+router.delete(
+  "/:id_request",
+  requireRoles(["user", "admin"]),
+  async (req, res) => {
+    let authorized = false;
+
+    if (req.id_role === 4) authorized = true;
+
+    // Checks if user created the request
+    if (req.id_role === 1) {
+      const query = util.promisify(connection.query).bind(connection);
+      const checkResult = await query(
+        "SELECT id_user FROM requests WHERE id_request = " +
+          req.params.id_request
+      );
+
+      if (checkResult.length < 1)
+        return res.status(404).json({ error: "id_request not found" });
+      if (req.id_user === checkResult[0].id_user) authorized = true;
+    }
+
+    if (!authorized)
+      return res.status(401).json({ error: "Unauthorized access" });
+
+    connection.query(
+      `DELETE FROM requests WHERE id_request = ?`,
+      [req.params.id_request],
+      (err, rows, fields) => {
+        if (err) return res.status(500).json({ error: err });
+        res.sendStatus(200);
+      }
+    );
+  }
+);
 
 module.exports = router;

@@ -34,7 +34,7 @@ export default function SearchBar({ placeholder, onSearch, clearOnSearch }) {
           className="p-2 text-white bg-tertiary text-xs font-bold rounded-full min-w-24"
           onClick={handleSubmit}
         >
-          Cari
+          Search
         </button>
       ) : null}
     </div>

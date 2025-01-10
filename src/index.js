@@ -17,6 +17,9 @@ import Page_Dashboard from "./pages/Dashboard";
 import MessageProvider from "./providers/MessageProvider";
 import Page_ReimbursementForm from "./pages/ReimbursementForm";
 import Page_ReimbursementView from "./pages/ReimbursementView";
+import Page_Admin from "./pages/Admin";
+import Page_AdminForm from "./pages/AdminForm";
+import Page_AdminEdit from "./pages/AdminEdit";
 
 const router = createBrowserRouter([
   {
@@ -42,6 +45,18 @@ const router = createBrowserRouter([
           {
             path: "/reimbursement/view/:id_request",
             element: <Page_ReimbursementView />,
+          },
+          {
+            path: "/admin",
+            element: <Page_Admin />,
+          },
+          {
+            path: "/admin/add",
+            element: <Page_AdminForm />,
+          },
+          {
+            path: "/admin/edit/:id_user",
+            element: <Page_AdminEdit />,
           },
         ],
       },

@@ -77,7 +77,15 @@ router.put("/payment/:id_request", requireRoles(["finance"]), (req, res) => {
           ],
           (err, rows, fields) => {
             if (err) return res.status(500).json({ error: err });
-            res.sendStatus(200);
+            res
+              .status(200)
+              .json({
+                status: req.body.approved ? "approved" : "rejected",
+                notes: req.body.notes,
+                date: new Date().toString(),
+                image: req.file.filename,
+                user: {},
+              });
           }
         );
       }

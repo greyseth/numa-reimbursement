@@ -1,6 +1,7 @@
 import {
   faBackward,
   faImage,
+  faInfoCircle,
   faMinusSquare,
   faPlusSquare,
   faTrash,
@@ -12,35 +13,43 @@ import { useNavigate } from "react-router-dom";
 import { LoadingContext } from "../providers/LoadingProvider";
 import { WarningContext } from "../providers/WarningProvider";
 import Popup_AddItem from "../components/popups/popup_AddItem";
-import formatDate from "../util/dateFormatter";
-import formatPrice from "../util/priceFormatter";
 import ImageViewer from "../components/popups/popup_ImageVIewer";
 import { verifyInput } from "../util/verifyInput";
 import ItemListItem from "../components/ItemListItem";
+import { MessageContext } from "../providers/MessageProvider";
 
 export default function Page_ReimbursementForm() {
   const { loading, setLoading } = useContext(LoadingContext);
   const { warning, setWarning } = useContext(WarningContext);
+  const { message, setMessage } = useContext(MessageContext);
 
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [items, setItems] = useState([
-    // { name: "Test Item", price: 100000, date: "00/00/0000", image: undefined },
-  ]);
+  const [type, setType] = useState("transfer");
+  const [bankNumber, setBankNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [items, setItems] = useState([]);
   // items: [{name: "", price: 0, image: File}]
 
   const [addItem, setAddItem] = useState(false);
   const [viewImage, setViewImage] = useState(undefined);
 
   async function handleSubmit() {
-    const verified = verifyInput({ title: title, items: items }, (param) =>
-      setWarning({
-        headerMessage: "Can't Submit Request",
-        message: `Input field ${param} cannot be empty`,
-        singleConfirm: true,
-      })
+    const verified = verifyInput(
+      {
+        title: title,
+        items: items,
+        bankNumber: bankNumber,
+        bankName: bankName,
+      },
+      (param) =>
+        setWarning({
+          headerMessage: "Can't Submit Request",
+          message: `Input field ${param} cannot be empty`,
+          singleConfirm: true,
+        })
     );
 
     if (verified) {
@@ -52,6 +61,9 @@ export default function Page_ReimbursementForm() {
 
         formData.append("title", title);
         formData.append("description", description);
+        formData.append("type", type);
+        formData.append("bankNumber", bankNumber);
+        formData.append("bankName", bankName);
 
         for (let i = 0; i < items.length; i++)
           formData.append("images", items[i].image);
@@ -146,6 +158,55 @@ export default function Page_ReimbursementForm() {
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       ></textarea>
+
+      <label className="form-label">Request Type</label>
+      <select
+        className="form-input mb-4"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+      >
+        <option value={"transfer"}>Transfer</option>
+        <option value={"petty cash"}>Petty Cash</option>
+      </select>
+
+      <div className="w-full grid grid-cols-2 gap-4">
+        <div>
+          <label className="form-label">
+            Bank Account Number{" "}
+            <FontAwesomeIcon
+              icon={faInfoCircle}
+              className="cursor-help"
+              onMouseEnter={() =>
+                setMessage(`Your bank account number to receive reimbursement`)
+              }
+              onMouseLeave={() => setMessage("")}
+            />
+          </label>
+          <input
+            className="form-input mb-4"
+            value={bankNumber}
+            onChange={(e) => setBankNumber(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="form-label">
+            Bank Name{" "}
+            <FontAwesomeIcon
+              icon={faInfoCircle}
+              className="cursor-help"
+              onMouseEnter={() =>
+                setMessage(`Name of bank associated with account number`)
+              }
+              onMouseLeave={() => setMessage("")}
+            />
+          </label>
+          <input
+            className="form-input mb-4"
+            value={bankName}
+            onChange={(e) => setBankName(e.target.value)}
+          />
+        </div>
+      </div>
 
       <label className="form-label">Request Items</label>
       <div className="w-dull p-2 rounded-lg bg-text mb-4">

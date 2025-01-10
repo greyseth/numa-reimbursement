@@ -12,6 +12,7 @@ export default function GlobalWarning({
   message,
   singleConfirm,
   confirmDanger,
+  cancelAction,
   confirmAction,
 }) {
   const { warning, setWarning } = useContext(WarningContext);
@@ -21,6 +22,9 @@ export default function GlobalWarning({
       if (e.key === "Escape") {
         if (singleConfirm && typeof confirmAction === "function")
           confirmAction();
+        else {
+          if (typeof cancelAction === "function") cancelAction();
+        }
         setWarning(undefined);
       }
     }
@@ -37,7 +41,10 @@ export default function GlobalWarning({
             icon={faClose}
             color="white"
             className="cursor-pointer"
-            onClick={() => setWarning(undefined)}
+            onClick={() => {
+              if (typeof cancelAction === "function") cancelAction();
+              setWarning(undefined);
+            }}
           />
           <p className="text-white text-lg">
             {headerMessage ? headerMessage : "Process Confirmation"}
@@ -64,7 +71,10 @@ export default function GlobalWarning({
           <div className="mt-6 grid grid-cols-2 gap-4">
             <button
               className="p-2 grow rounded bg-white text-black hover:bg-gray-500 hover:text-white"
-              onClick={() => setWarning(undefined)}
+              onClick={() => {
+                if (typeof cancelAction === "function") cancelAction();
+                setWarning(undefined);
+              }}
             >
               No
             </button>
