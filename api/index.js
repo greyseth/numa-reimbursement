@@ -6,10 +6,29 @@ const helmet = require("helmet");
 const cors = require("cors");
 const authenticateToken = require("./middlewares/authenticateToken");
 const verifyRole = require("./middlewares/verifyRole");
+const { sendEmail } = require("./util/email/emailUtil");
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
+
+app.get("/", (req, res) => {
+  sendEmail(
+    "",
+    {
+      title: "request",
+      description: "yes request",
+      type: "petty cash",
+      date_created: "00/00/0000",
+      status: "accepted",
+    },
+    (err, info) => {
+      if (err) return res.status(500).json({ error: err });
+      res.sendStatus(200);
+    }
+  );
+});
 
 app.get("/img/:filename", async (req, res) => {
   res.sendFile(req.params.filename, {
@@ -17,7 +36,6 @@ app.get("/img/:filename", async (req, res) => {
   });
 });
 
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
@@ -32,10 +50,6 @@ app.use("/users", usersRoute);
 app.use("/requests", requestsRoute);
 app.use("/requests/approve", approvalRoute);
 app.use("/requests/export", exportRoute);
-
-app.get("/", (req, res) => {
-  res.sendStatus(200);
-});
 
 app.listen(3001, () => {
   console.log("API is running");

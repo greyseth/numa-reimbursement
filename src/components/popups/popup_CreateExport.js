@@ -45,6 +45,7 @@ export default function CreateExport({ setClose }) {
                 "auth_token"
               )}`,
             },
+            mode: "no-cors",
           }
         );
 

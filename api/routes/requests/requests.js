@@ -285,8 +285,7 @@ router.get("/:id_request", (req, res) => {
           FROM items 
           LEFT JOIN items_approval app ON app.id_item = items.id_item
           LEFT JOIN users ON users.id_user = app.id_approver
-          WHERE items.id_request = ?
-          GROUP BY items.id_item;
+          WHERE items.id_request = ? GROUP BY items.id_item;
         `,
         [req.params.id_request],
         (err, rows, fields) => {

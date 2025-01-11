@@ -3,6 +3,7 @@ const requireRoles = require("../../middlewares/requireRoles");
 const connection = require("../../util/db");
 const requireParams = require("../../middlewares/requireParams");
 const { upload, singleUpload } = require("../../util/upload");
+const statusCheck = require("../../util/email/statusCheck");
 const router = express.Router();
 
 // Creates approval for individual request items
@@ -11,12 +12,18 @@ router.put("/item/:id_item", requireRoles(["approver"]), (req, res) => {
 
   // Verifies that item is still pending
   connection.query(
-    `SELECT status FROM items_approval WHERE id_item = ?`,
+    `SELECT 
+      items.id_request, status 
+    FROM items_approval 
+    LEFT JOIN items ON items.id_item = items_approval.id_item
+    WHERE items_approval.id_item = ?`,
     [req.params.id_item],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });
       if (rows.length < 1)
         return res.status(404).json({ error: "id_item not found" });
+
+      const id_request = rows[0].id_request;
 
       if (rows[0].status === "pending") {
         connection.query(
@@ -33,6 +40,8 @@ router.put("/item/:id_item", requireRoles(["approver"]), (req, res) => {
           ],
           (err, rows, fields) => {
             if (err) return res.status(500).json({ error: err });
+            statusCheck(false, id_request);
+
             res.sendStatus(200);
           }
         );
@@ -77,15 +86,15 @@ router.put("/payment/:id_request", requireRoles(["finance"]), (req, res) => {
           ],
           (err, rows, fields) => {
             if (err) return res.status(500).json({ error: err });
-            res
-              .status(200)
-              .json({
-                status: req.body.approved ? "approved" : "rejected",
-                notes: req.body.notes,
-                date: new Date().toString(),
-                image: req.file.filename,
-                user: {},
-              });
+            statusCheck(true, req.params.id_request);
+
+            res.status(200).json({
+              status: req.body.approved ? "approved" : "rejected",
+              notes: req.body.notes,
+              date: new Date().toString(),
+              image: req.file.filename,
+              user: {},
+            });
           }
         );
       }
