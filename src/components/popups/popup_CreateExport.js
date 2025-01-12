@@ -25,35 +25,53 @@ export default function CreateExport({ setClose }) {
     if (range === "month") verified = verifyInput(monthInput);
     else if (range === "date")
       verified = verifyInput({ from: dateInput.from, to: dateInput.to });
+    else verified = true;
 
     if (verified) {
       setLoading({ loading: true });
 
       try {
+        const headers = new Headers();
+        headers.append("Content-Type", "application/x-www-form-urlencoded");
+        headers.append(
+          "Authorization",
+          `Bearer ${window.localStorage.getItem("auth_token")}`
+        );
+
+        const urlencoded = new URLSearchParams();
+        if (range === "month") {
+          urlencoded.append("month", monthInput.month);
+          urlencoded.append("year", monthInput.year);
+        } else if (range === "date") {
+          urlencoded.append("from", dateInput.from);
+          urlencoded.append("to", dateInput.to);
+        }
+
         const request = await fetch(
           process.env.REACT_APP_APIHOST + `/requests/export/${range}`,
           {
             method: "POST",
-            body:
-              range === "month"
-                ? monthInput
-                : range === "date"
-                ? dateInput
-                : undefined,
-            headers: {
-              authorization: `Bearer ${window.localStorage.getItem(
-                "auth_token"
-              )}`,
-            },
-            mode: "no-cors",
+            headers: headers,
+            body: urlencoded,
+            redirect: "follow",
           }
         );
 
         if (request.ok) {
           const a = document.createElement("a");
           a.download = `Report_${
-            range === "month" ? monthInput.year : formatDate(dateInput.from)
-          }-${range === "month" ? monthInput.month : formatDate(dateInput.to)}`;
+            range === "month"
+              ? monthInput.year
+              : range === "date"
+              ? formatDate(dateInput.from)
+              : "all"
+          }-${
+            range === "month"
+              ? monthInput.month
+              : range === "date"
+              ? formatDate(dateInput.to)
+              : "time"
+          }`;
           a.href = URL.createObjectURL(await request.blob());
           document.body.appendChild(a);
           a.click();

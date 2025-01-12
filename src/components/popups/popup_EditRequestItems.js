@@ -170,7 +170,15 @@ export default function RequestEditItems({ details, setDetails, setClose }) {
               details.items.filter((i) => !toDelete.includes(i.id_item))
                 .length < 1
             }
-            onClick={handleSave}
+            onClick={() =>
+              setWarning({
+                headerMessage: "Update confirmation",
+                message:
+                  "This action will reset finance approval (if applicable)",
+                confirmDanger: true,
+                confirmAction: handleSave,
+              })
+            }
           >
             Save Changes
           </button>

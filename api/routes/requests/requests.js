@@ -436,7 +436,64 @@ router.put(
                     res.status(500).json({ error: err })
                   );
 
-                res.sendStatus(200);
+                connection.query(
+                  `
+                    SELECT items_approval.status 
+                    FROM items 
+                    LEFT JOIN items_approval ON items_approval.id_item = items.id_item 
+                    WHERE items.id_request = ?
+                  `,
+                  [req.params.id_request],
+                  (err, rows) => {
+                    if (err)
+                      return connection.rollback(() =>
+                        res.status(500).json({ error: err })
+                      );
+                    if (rows.length < 1)
+                      return connection.rollback(() =>
+                        res
+                          .status(500)
+                          .json({ error: "Items list cannot be empty" })
+                      );
+
+                    let setStatus = "approved";
+                    let isRejected = false;
+                    rows.forEach((r) => {
+                      if (r.status === "pending") setStatus = "pending";
+                      else if (r.status === "rejected") isRejected = true;
+                    });
+
+                    connection.query(
+                      `UPDATE requests SET status = ? WHERE id_request = ?`,
+                      [
+                        isRejected ? "rejected" : setStatus,
+                        req.params.id_request,
+                      ],
+                      (err, rows) => {
+                        if (err)
+                          return connection.rollback(() =>
+                            res.status(500).json({ error: err })
+                          );
+
+                        connection.query(
+                          `DELETE FROM requests_finance WHERE id_request = ?`,
+                          [req.params.id_request],
+                          (err, rows) => {
+                            if (err)
+                              return connection.rollback(() =>
+                                res.status(500).json({ error: err })
+                              );
+                            connection.commit((err) => {
+                              if (err)
+                                return res.status(500).json({ error: err });
+                              res.sendStatus(200);
+                            });
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
               }
             );
           }

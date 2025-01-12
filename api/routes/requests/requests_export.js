@@ -282,7 +282,7 @@ function createReport(data, header, res) {
 
     // Worksheet title
     ws.cell(2, 2, 3, 2 + columns.length - 1, true)
-      .string("REPORT")
+      .string(header)
       .style({
         border: fullBorder,
         alignment: { horizontal: "center", vertical: "center" },

@@ -13,22 +13,23 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-app.get("/", (req, res) => {
-  sendEmail(
-    "",
-    {
-      title: "request",
-      description: "yes request",
-      type: "petty cash",
-      date_created: "00/00/0000",
-      status: "accepted",
-    },
-    (err, info) => {
-      if (err) return res.status(500).json({ error: err });
-      res.sendStatus(200);
-    }
-  );
-});
+// Testing
+// app.get("/", (req, res) => {
+//   sendEmail(
+//     "",
+//     {
+//       title: "request",
+//       description: "yes request",
+//       type: "petty cash",
+//       date_created: "00/00/0000",
+//       status: "accepted",
+//     },
+//     (err, info) => {
+//       if (err) return res.status(500).json({ error: err });
+//       res.sendStatus(200);
+//     }
+//   );
+// });
 
 app.get("/img/:filename", async (req, res) => {
   res.sendFile(req.params.filename, {

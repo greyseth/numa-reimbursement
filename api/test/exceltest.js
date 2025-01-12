@@ -2,74 +2,159 @@ const excel = require("excel4node");
 
 const data = [
   {
-    id_request: 1,
-    title: "This is request #1",
-    description: "This is the first request",
-    requestor_name: "Grey",
-    date_created: "2024-12-23",
-    finance_status: "pending",
+    id_request: 2,
+    title: "Like a Butterfly",
+    description: "",
+    date_created: "8/1/2025",
+    requestor_name: "User",
+    finance_status: "approved",
     items: [
       {
-        name: "Item 1",
-        price: 10000,
-        date_purchased: "2024-12-22",
-        status: "pending",
+        id_request: 2,
+        name: "so fly high",
+        price: 150000,
+        date_purchased: "8/1/2025",
+        status: "approved",
       },
       {
-        name: "Item 2",
+        id_request: 2,
+        name: "like a butterfly",
         price: 20000,
-        date_purchased: "2024-12-23",
+        date_purchased: "10/1/2025",
         status: "approved",
       },
     ],
   },
   {
-    id_request: 1,
-    title: "This is request #1",
-    description: "This is the first request",
-    requestor_name: "Grey",
-    date_created: "2024-12-23",
-    finance_status: "pending",
+    id_request: 3,
+    title: "suki ni nareru hito wo",
+    description: "suki ni nareta naraba",
+    date_created: "9/1/2025",
+    requestor_name: "User",
+    finance_status: "approved",
     items: [
       {
-        name: "Item 1",
-        price: 10000,
-        date_purchased: "2024-12-22",
-        status: "pending",
+        id_request: 3,
+        name: "ai wo control dekita nara",
+        price: 15000,
+        date_purchased: "9/1/2025",
+        status: "approved",
       },
       {
-        name: "Item 2",
+        id_request: 3,
+        name: "dore dake raku ni naretan darou",
         price: 20000,
-        date_purchased: "2024-12-23",
+        date_purchased: "9/1/2025",
+        status: "approved",
+      },
+      {
+        id_request: 3,
+        name: "joushiki-iro ame ga futari wo nijimaseru",
+        price: 30000,
+        date_purchased: "9/1/2025",
         status: "approved",
       },
     ],
   },
   {
-    id_request: 1,
-    title: "This is request #1",
-    description: "This is the first request",
-    requestor_name: "Grey",
-    date_created: "2024-12-23",
+    id_request: 4,
+    title: "When this began",
+    description: "",
+    date_created: "11/1/2025",
+    requestor_name: "User",
+    finance_status: "approved",
+    items: [
+      {
+        id_request: 4,
+        name: "i had nothing to say",
+        price: 10000,
+        date_purchased: "11/1/2025",
+        status: "approved",
+      },
+      {
+        id_request: 4,
+        name: "just stuck, hollow and alone and the fault is my own and the fault is my own",
+        price: 20000,
+        date_purchased: "11/1/2025",
+        status: "approved",
+      },
+      {
+        id_request: 4,
+        name: "i wanna heal i wanna feel like im close to something real",
+        price: 30000,
+        date_purchased: "11/1/2025",
+        status: "approved",
+      },
+    ],
+  },
+  {
+    id_request: 5,
+    title: "summer has come and past",
+    description: "the innocent can never last",
+    date_created: "11/1/2025",
+    requestor_name: "User",
     finance_status: "pending",
     items: [
       {
-        name: "Item 1",
-        price: 10000,
-        date_purchased: "2024-12-22",
+        id_request: 5,
+        name: "when September ends",
+        price: 50000,
+        date_purchased: "8/1/2025",
+        status: "pending",
+      },
+    ],
+  },
+  {
+    id_request: 6,
+    title: "midnight shadow",
+    description: "kirisaku akuseru",
+    date_created: "12/1/2025",
+    requestor_name: "User",
+    finance_status: "approved",
+    items: [
+      {
+        id_request: 6,
+        name: "kishimu highway city",
+        price: 25000,
+        date_purchased: "12/1/2025",
+        status: "approved",
+      },
+      {
+        id_request: 6,
+        name: "rouge iro no urei toida knife no youna",
+        price: 12000,
+        date_purchased: "12/1/2025",
+        status: "approved",
+      },
+    ],
+  },
+  {
+    id_request: 7,
+    title: "Judgment",
+    description: "i hope you haven't Lost your Judgment",
+    date_created: "12/1/2025",
+    requestor_name: "Greyseth",
+    finance_status: "pending",
+    items: [
+      {
+        id_request: 7,
+        name: "Yagami",
+        price: 250000,
+        date_purchased: "11/1/2025",
         status: "pending",
       },
       {
-        name: "Item 2",
-        price: 20000,
-        date_purchased: "2024-12-23",
-        status: "approved",
+        id_request: 7,
+        name: "Kaito",
+        price: 40000,
+        date_purchased: "11/1/2025",
+        status: "pending",
       },
     ],
   },
 ];
 
-function exportExcel(data) {
+function exportExcel(data, header) {
   const wb = new excel.Workbook();
   let ws = wb.addWorksheet("Report");
 
@@ -171,7 +256,7 @@ function exportExcel(data) {
 
   // Worksheet title
   ws.cell(2, 2, 3, 2 + columns.length - 1, true)
-    .string("REPORT")
+    .string(header)
     .style({
       border: fullBorder,
       alignment: { horizontal: "center", vertical: "center" },
@@ -279,4 +364,4 @@ function exportExcel(data) {
   wb.write("Export.xlsx");
 }
 
-exportExcel(data);
+exportExcel(data, "REPORT");
