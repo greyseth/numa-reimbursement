@@ -32,13 +32,12 @@ export default function ItemListItem({
 
   return (
     <li className="min-w-full w-fit p-2 bg-white rounded-lg flex items-center gap-3 [&:not(:last-child)]:mb-3">
-      <p className="basis-0 grow min-w-36 md:min-w-96">{item.name}</p>
-      <p className="basis-0 grow min-w-36 md:min-w-64 text-wrap">
-        {formatPrice(item.price)}
+      <p className="basis-0 grow min-w-36 md:min-w-48">{item.name}</p>
+      <p className="basis-0 grow min-w-36 md:min-w-48 text-center">
+        {item.category.category}
       </p>
-      <p className="basis-0 grow min-w-36 md:min-w-64">
-        {formatDate(item.date)}
-      </p>
+      <p className="text-wrap">{formatPrice(item.price)}</p>
+      <p className="">{formatDate(item.date)}</p>
       <div
         className={`flex items-center justify-end gap-2 ${
           !cantRemove ? "min-w-24" : ""

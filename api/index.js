@@ -47,11 +47,12 @@ const usersRoute = require("./routes/users/users");
 const requestsRoute = require("./routes/requests/requests");
 const approvalRoute = require("./routes/requests/requests_approval");
 const exportRoute = require("./routes/requests/requests_export");
+const miscRoute = require("./routes/misc");
+app.use("/", miscRoute);
 app.use("/users", usersRoute);
 app.use("/requests", requestsRoute);
 app.use("/requests/approve", approvalRoute);
 app.use("/requests/export", exportRoute);
-
 app.listen(3001, () => {
   console.log("API is running");
 });

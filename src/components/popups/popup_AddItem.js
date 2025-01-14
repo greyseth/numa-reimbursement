@@ -5,10 +5,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 import FileInput from "../FileInput";
 import { verifyInput } from "../../util/verifyInput";
+import CategoryDropdown from "../CategoryDropdown";
 
 export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
   const { warning, setWarning } = useContext(WarningContext);
 
+  const [categoryInput, setCategoryInput] = useState(undefined);
   const [descriptionInput, setDescriptionInput] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [priceInput, setPriceInput] = useState("");
@@ -28,6 +30,7 @@ export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
         name: descriptionInput,
         price: priceInput,
         date: dateInput,
+        category: categoryInput,
         image: fileInput[0],
       },
     ]);
@@ -55,7 +58,17 @@ export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
 
         <div className="mb-3 mt-6">
           <label className="block text-sm font-medium text-primary mb-1">
-            Item Description
+            Request Category
+          </label>
+          <CategoryDropdown
+            className={
+              "w-full bg-text px-3 p-2 rounded-lg text-xs outline-none placeholder:text-gray-500 mb-3 cursor-pointer"
+            }
+            onChange={(value) => setCategoryInput(value)}
+          />
+
+          <label className="block text-sm font-medium text-primary mb-1">
+            Item Description (remark)
           </label>
           <input
             type="text"

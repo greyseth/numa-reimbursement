@@ -47,7 +47,8 @@ const sendEmail = function (destinationAddress, values, callback) {
     var mailOptions = {
       from: "anargya2gilland@gmail.com",
       // TODO: Change this value to destinationAddress
-      to: "anargya2gilland@gmail.com",
+      // to: "anargya2gilland@gmail.com",
+      to: destinationAddress,
       subject: "Review Request Reimbursement",
       html: joinedHTML,
     };

@@ -31,10 +31,10 @@ router.post(
 
         connection.query(
           `
-            SELECT 
+            SELECT
               items.id_request, items.name, items.price, items.date_purchased,
               items_approval.status
-            FROM items 
+            FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             WHERE id_request IN (?)
           `,
@@ -91,10 +91,10 @@ router.post(
 
         connection.query(
           `
-            SELECT 
+            SELECT
               items.id_request, items.name, items.price, items.date_purchased,
               items_approval.status
-            FROM items 
+            FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             WHERE id_request IN (?)
           `,
@@ -145,10 +145,10 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
 
       connection.query(
         `
-            SELECT 
+            SELECT
               items.id_request, items.name, items.price, items.date_purchased,
               items_approval.status
-            FROM items 
+            FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             WHERE id_request IN (?)
           `,

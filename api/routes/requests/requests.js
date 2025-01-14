@@ -133,11 +133,12 @@ router.post("/", requireRoles(["user"]), (req, res) => {
               i.name,
               i.price,
               i.date,
+              i.id_category,
               req.files[index].filename,
             ]);
             connection.query(
               `
-                INSERT INTO items(id_request, name, price, date_purchased, filename)
+                INSERT INTO items(id_request, name, price, date_purchased, id_category, filename)
                 VALUES ?
               `,
               [itemsInsert],
@@ -160,65 +161,81 @@ router.post("/", requireRoles(["user"]), (req, res) => {
   });
 });
 
-const monthNames = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
 router.get("/yearly", (req, res) => {
   connection.query(
     `
-      SELECT MONTH(requests.date_created) AS month, SUM(items.price) AS amount
-      FROM requests
-      LEFT JOIN items ON items.id_request = requests.id_request
-      WHERE requests.type = 'transfer'
-      ORDER BY requests.date_created ASC;
+      SELECT 
+        categories.category, SUM(items.price) AS amount
+      FROM categories 
+      LEFT JOIN items ON items.id_category = categories.id_category 
+      LEFT JOIN requests ON requests.id_request = items.id_request
+      WHERE YEAR(requests.date_created) = ? AND requests.type = 'transfer'
+      GROUP BY categories.id_category;
     `,
+    [new Date().getFullYear()],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err });
-      const transferData = rows[0].amount ? rows : [];
+      const transfer = rows;
 
       connection.query(
         `
-          SELECT MONTH(requests.date_created) AS month, SUM(items.price) AS amount
-          FROM requests
-          LEFT JOIN items ON items.id_request = requests.id_request
-          WHERE requests.type = 'petty cash'
-          ORDER BY requests.date_created ASC;
+          SELECT 
+            categories.category, SUM(items.price) AS amount 
+          FROM categories 
+          LEFT JOIN items ON items.id_category = categories.id_category 
+          LEFT JOIN requests ON requests.id_request = items.id_request
+          WHERE YEAR(requests.date_created) = ? AND requests.type = 'petty cash'
+          GROUP BY categories.id_category;
         `,
+        [new Date().getFullYear()],
         (err, rows) => {
           if (err) return res.status(500).json({ error: err });
-          const pettyData = rows[0].amount ? rows : [];
+          const pettyCash = rows;
 
           res.status(200).json({
-            transfer: monthNames.map((month, i) => {
-              let returnData = { month: month, amount: 0 };
+            transfer: transfer,
+            petty: pettyCash,
+          });
+        }
+      );
+    }
+  );
+});
 
-              transferData.forEach((td) => {
-                if (td.month === i + 1)
-                  returnData = { month: month, amount: td.amount };
-              });
+router.get("/yearly/:month", (req, res) => {
+  connection.query(
+    `
+      SELECT 
+        categories.category, SUM(items.price) AS amount
+      FROM categories 
+      LEFT JOIN items ON items.id_category = categories.id_category 
+      LEFT JOIN requests ON requests.id_request = items.id_request
+      WHERE YEAR(requests.date_created) = ? AND MONTH(requests.date_created) = ? AND requests.type = 'transfer'
+      GROUP BY categories.id_category;
+    `,
+    [new Date().getFullYear(), req.params.month],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err });
+      const transfer = rows;
 
-              return returnData;
-            }),
-            petty: monthNames.map((month, i) => {
-              let returnData = { month: month, amount: 0 };
+      connection.query(
+        `
+          SELECT 
+            categories.category, SUM(items.price) AS amount 
+          FROM categories 
+          LEFT JOIN items ON items.id_category = categories.id_category 
+          LEFT JOIN requests ON requests.id_request = items.id_request
+          WHERE YEAR(requests.date_created) = ? AND MONTH(requests.date_created) = ? AND requests.type = 'petty cash'
+          GROUP BY categories.id_category;
+        `,
+        [new Date().getFullYear(), req.params.month],
+        (err, rows) => {
+          if (err) return res.status(500).json({ error: err });
+          const pettyCash = rows;
 
-              pettyData.forEach((td) => {
-                if (td.month === i + 1)
-                  returnData = { month: month, amount: td.amount };
-              });
-
-              return returnData;
-            }),
+          res.status(200).json({
+            transfer: transfer,
+            petty: pettyCash,
           });
         }
       );
@@ -229,20 +246,20 @@ router.get("/yearly", (req, res) => {
 router.get("/:id_request", (req, res) => {
   connection.query(
     `
-        SELECT requests.*, SUM(items.price) AS total_price, 
-          users.id_user AS requestor_id, users.username AS requestor_name, 
-          users.email AS requestor_email, users.nik AS requestor_nik,
-          finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
-          finance.username AS finance_name, finance.email AS finance_email
-        FROM requests
-        LEFT JOIN users ON users.id_user = requests.id_user
-        LEFT JOIN items ON items.id_request = requests.id_request
-        LEFT JOIN requests_finance finance_app ON finance_app.id_request = requests.id_request
-        LEFT JOIN users finance ON finance.id_user = finance_app.id_finance
-        WHERE requests.id_request = ?
-        GROUP BY requests.id_request
-        LIMIT 1;
-      `,
+      SELECT requests.*, SUM(items.price) AS total_price, 
+        users.id_user AS requestor_id, users.username AS requestor_name, 
+        users.email AS requestor_email, users.nik AS requestor_nik,
+        finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
+        finance.username AS finance_name, finance.email AS finance_email
+      FROM requests
+      LEFT JOIN users ON users.id_user = requests.id_user
+      LEFT JOIN items ON items.id_request = requests.id_request
+      LEFT JOIN requests_finance finance_app ON finance_app.id_request = requests.id_request
+      LEFT JOIN users finance ON finance.id_user = finance_app.id_finance
+      WHERE requests.id_request = ?
+      GROUP BY requests.id_request
+      LIMIT 1;
+    `,
     [req.params.id_request],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });
@@ -280,11 +297,13 @@ router.get("/:id_request", (req, res) => {
         `
           SELECT 
             items.*, 
+            categories.*,
             app.status AS approval_status, app.notes AS approval_notes, app.approval_date,
             users.username AS approval_username
           FROM items 
           LEFT JOIN items_approval app ON app.id_item = items.id_item
           LEFT JOIN users ON users.id_user = app.id_approver
+          LEFT JOIN categories ON categories.id_category = items.id_category
           WHERE items.id_request = ? GROUP BY items.id_item;
         `,
         [req.params.id_request],
@@ -298,6 +317,10 @@ router.get("/:id_request", (req, res) => {
             items: rows.map((r) => {
               let rCopy = {
                 ...r,
+                category: {
+                  id_category: r.id_category,
+                  category: r.category,
+                },
                 date: r.date_purchased,
                 image: r.filename,
               };

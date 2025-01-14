@@ -71,7 +71,12 @@ export default function Page_ReimbursementForm() {
         formData.append(
           "items",
           JSON.stringify(
-            items.map((i) => ({ name: i.name, price: i.price, date: i.date }))
+            items.map((i) => ({
+              name: i.name,
+              price: i.price,
+              date: i.date,
+              id_category: i.category.id_category,
+            }))
           )
         );
 

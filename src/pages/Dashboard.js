@@ -25,8 +25,8 @@ export default function Page_Dashboard() {
   const [pettyData, setPettyData] = useState([]);
   const [transferTotal, setTransferTotal] = useState(0);
   const [pettyTotal, setPrettyTotal] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(0);
 
-  const [activeIndex, setActiveIndex] = useState(-1);
   const MONTH_COLORS = [
     "#1f456e",
     "#c85073",
@@ -42,10 +42,28 @@ export default function Page_Dashboard() {
     "#008080",
   ];
 
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
   async function fetchData() {
     setDataLoading({});
 
-    const response = await request("GET", "/requests/yearly");
+    const response = await request(
+      "GET",
+      `/requests/yearly${selectedMonth == 0 ? "" : `/${selectedMonth}`}`
+    );
     if (response.error) setDataLoading({ error: true });
 
     setTransferData(
@@ -71,6 +89,10 @@ export default function Page_Dashboard() {
     setPrettyTotal(total2);
   }, [transferData, pettyData]);
 
+  useEffect(() => {
+    fetchData();
+  }, [selectedMonth]);
+
   return (
     <>
       <h1 className="mb-4">
@@ -85,37 +107,40 @@ export default function Page_Dashboard() {
         )
       ) : (
         <>
+          <select
+            className="p-1 bg-primary rounded text-white cursor-pointer mb-3"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            <option value={0}>All Year</option>
+            {months.map((m, i) => (
+              <option value={i + 1}>{m}</option>
+            ))}
+          </select>
+
           <h1 className="font-bold text-xl">
             {new Date().getFullYear()} Reimbursement Stats
           </h1>
           <p>Year Total: {formatPrice(transferTotal)}</p>
-          <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-3">
-            <div>
-              <ResponsiveContainer width={"100%"} height={300}>
-                <BarChart data={transferData}>
-                  <XAxis dataKey={"month"} fontSize={8} />
-                  <YAxis
-                    fontSize={8}
-                    tickFormatter={(entry) => formatPrice(entry)}
-                  />
-                  <Bar dataKey={"amount"} barSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div>
-              <ResponsiveContainer width={"100%"} height={400}>
-                <PieChart>
-                  <Pie
-                    data={transferData}
-                    dataKey={"amount"}
-                    innerRadius={30}
-                    label={renderCustomizedLabel}
-                    labelLine={false}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          {transferData.length > 0 ? (
+            <ResponsiveContainer width={"100%"} height={400}>
+              <PieChart>
+                <Pie
+                  data={transferData}
+                  nameKey={"category"}
+                  dataKey={"amount"}
+                  innerRadius={30}
+                  label={renderCustomizedLabel}
+                  labelLine={false}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <h1 className="w-full text-center">
+              No requests in this category have been made yet
+            </h1>
+          )}
 
           <hr className="h-1 bg-contrast mb-12"></hr>
 
@@ -123,33 +148,25 @@ export default function Page_Dashboard() {
             {new Date().getFullYear()} Petty Cash Reimbursement Stats
           </h1>
           <p>Year Total: {formatPrice(pettyTotal)}</p>
-          <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-3">
-            <div>
-              <ResponsiveContainer width={"100%"} height={300}>
-                <BarChart data={pettyData}>
-                  <XAxis dataKey={"month"} fontSize={8} />
-                  <YAxis
-                    fontSize={8}
-                    tickFormatter={(entry) => formatPrice(entry)}
-                  />
-                  <Bar dataKey={"amount"} barSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div>
-              <ResponsiveContainer width={"100%"} height={400}>
-                <PieChart>
-                  <Pie
-                    data={transferData}
-                    dataKey={"amount"}
-                    innerRadius={30}
-                    label={renderCustomizedLabel}
-                    labelLine={false}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          {pettyData.length > 0 ? (
+            <ResponsiveContainer width={"100%"} height={400}>
+              <PieChart>
+                <Pie
+                  data={pettyData}
+                  nameKey={"category"}
+                  dataKey={"amount"}
+                  innerRadius={30}
+                  label={renderCustomizedLabel}
+                  labelLine={false}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <h1 className="w-full text-center">
+              No requests in this category have been made yet
+            </h1>
+          )}
         </>
       )}
     </>
