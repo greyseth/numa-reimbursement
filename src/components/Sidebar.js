@@ -28,8 +28,8 @@ export default function Sidebar() {
   const sidebarContent = [
     {
       icon: faFileText,
-      label: "Reimbursement",
-      route: "/reimbursement",
+      label: "Request Management",
+      route: "/request",
       onClick: () => {},
       requireRoles: ["user", "approver", "finance"],
     },

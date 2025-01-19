@@ -9,6 +9,7 @@ const requireParamsAfter = require("../../middlewares/requireParamsAfter");
 const router = express.Router();
 
 const exportRoute = require("./requests_export");
+const sendUpdateEmail = require("../../util/email/updateEmail");
 router.use("/export", exportRoute);
 
 const collapsedQuery = `
@@ -169,7 +170,7 @@ router.get("/yearly", (req, res) => {
       FROM categories 
       LEFT JOIN items ON items.id_category = categories.id_category 
       LEFT JOIN requests ON requests.id_request = items.id_request
-      WHERE YEAR(requests.date_created) = ? AND requests.type = 'transfer'
+      WHERE YEAR(requests.date_created) = ? AND requests.type = 'reimburse'
       GROUP BY categories.id_category;
     `,
     [new Date().getFullYear()],
@@ -248,7 +249,7 @@ router.get("/:id_request", (req, res) => {
     `
       SELECT requests.*, SUM(items.price) AS total_price, 
         users.id_user AS requestor_id, users.username AS requestor_name, 
-        users.email AS requestor_email, users.nik AS requestor_nik,
+        users.email AS requestor_email, users.nik AS requestor_nik, users.active AS requestor_active,
         finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
         finance.username AS finance_name, finance.email AS finance_email
       FROM requests
@@ -277,6 +278,7 @@ router.get("/:id_request", (req, res) => {
         username: rows[0].requestor_name,
         email: rows[0].requestor_email,
         nik: rows[0].requestor_nik,
+        active: rows[0].requestor_active,
       };
 
       let financeApproval = {
@@ -424,103 +426,106 @@ router.put(
     arrayUpload(req, res, (err) => {
       if (err) return res.status(500).json({ error: err });
 
-      connection.beginTransaction((err) => {
-        if (err) return res.status(500).json({ error: err });
+      sendUpdateEmail(req.params.id_request, () => {
+        connection.beginTransaction((err) => {
+          if (err) return res.status(500).json({ error: err });
 
-        // Deletes items
-        const deleteItems = JSON.parse(req.body.toDelete);
-        connection.query(
-          deleteItems.length > 0
-            ? `DELETE FROM items WHERE id_item IN (?)`
-            : "SELECT NULL",
-          [deleteItems],
-          (err, rows, fields) => {
-            if (err)
-              return connection.rollback(() =>
-                res.status(500).json({ error: err })
-              );
+          // Deletes items
+          const deleteItems = JSON.parse(req.body.toDelete);
+          connection.query(
+            deleteItems.length > 0
+              ? `DELETE FROM items WHERE id_item IN (?)`
+              : "SELECT NULL",
+            [deleteItems],
+            (err, rows, fields) => {
+              if (err)
+                return connection.rollback(() =>
+                  res.status(500).json({ error: err })
+                );
 
-            //Inserts new items
-            const items = JSON.parse(req.body.toAdd).map((i, ii) => [
-              req.params.id_request,
-              i.name,
-              i.price,
-              i.date,
-              req.files[ii].filename,
-            ]);
-            connection.query(
-              items.length > 0
-                ? `INSERT INTO items(id_request, name, price, date_purchased, filename) VALUES ?`
-                : "SELECT NULL",
-              [items],
-              (err, rows, fields) => {
-                if (err)
-                  return connection.rollback(() =>
-                    res.status(500).json({ error: err })
-                  );
+              //Inserts new items
+              const items = JSON.parse(req.body.toAdd).map((i, ii) => [
+                req.params.id_request,
+                i.name,
+                i.price,
+                i.date,
+                req.files[ii].filename,
+              ]);
+              connection.query(
+                items.length > 0
+                  ? `INSERT INTO items(id_request, name, price, date_purchased, filename) VALUES ?`
+                  : "SELECT NULL",
+                [items],
+                (err, rows, fields) => {
+                  if (err)
+                    return connection.rollback(() =>
+                      res.status(500).json({ error: err })
+                    );
 
-                connection.query(
-                  `
+                  connection.query(
+                    `
                     SELECT items_approval.status 
                     FROM items 
                     LEFT JOIN items_approval ON items_approval.id_item = items.id_item 
                     WHERE items.id_request = ?
                   `,
-                  [req.params.id_request],
-                  (err, rows) => {
-                    if (err)
-                      return connection.rollback(() =>
-                        res.status(500).json({ error: err })
-                      );
-                    if (rows.length < 1)
-                      return connection.rollback(() =>
-                        res
-                          .status(500)
-                          .json({ error: "Items list cannot be empty" })
-                      );
-
-                    let setStatus = "approved";
-                    let isRejected = false;
-                    rows.forEach((r) => {
-                      if (r.status === "pending") setStatus = "pending";
-                      else if (r.status === "rejected") isRejected = true;
-                    });
-
-                    connection.query(
-                      `UPDATE requests SET status = ? WHERE id_request = ?`,
-                      [
-                        isRejected ? "rejected" : setStatus,
-                        req.params.id_request,
-                      ],
-                      (err, rows) => {
-                        if (err)
-                          return connection.rollback(() =>
-                            res.status(500).json({ error: err })
-                          );
-
-                        connection.query(
-                          `DELETE FROM requests_finance WHERE id_request = ?`,
-                          [req.params.id_request],
-                          (err, rows) => {
-                            if (err)
-                              return connection.rollback(() =>
-                                res.status(500).json({ error: err })
-                              );
-                            connection.commit((err) => {
-                              if (err)
-                                return res.status(500).json({ error: err });
-                              res.sendStatus(200);
-                            });
-                          }
+                    [req.params.id_request],
+                    (err, rows) => {
+                      if (err)
+                        return connection.rollback(() =>
+                          res.status(500).json({ error: err })
                         );
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
+                      if (rows.length < 1)
+                        return connection.rollback(() =>
+                          res
+                            .status(500)
+                            .json({ error: "Items list cannot be empty" })
+                        );
+
+                      let setStatus = "approved";
+                      let isRejected = false;
+                      rows.forEach((r) => {
+                        if (r.status === "pending") setStatus = "pending";
+                        else if (r.status === "rejected") isRejected = true;
+                      });
+
+                      connection.query(
+                        `UPDATE requests SET status = ? WHERE id_request = ?`,
+                        [
+                          isRejected ? "rejected" : setStatus,
+                          req.params.id_request,
+                        ],
+                        (err, rows) => {
+                          if (err)
+                            return connection.rollback(() =>
+                              res.status(500).json({ error: err })
+                            );
+
+                          connection.query(
+                            `DELETE FROM requests_finance WHERE id_request = ?`,
+                            [req.params.id_request],
+                            (err, rows) => {
+                              if (err)
+                                return connection.rollback(() =>
+                                  res.status(500).json({ error: err })
+                                );
+                              connection.commit((err) => {
+                                if (err)
+                                  return res.status(500).json({ error: err });
+
+                                res.sendStatus(200);
+                              });
+                            }
+                          );
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
+        });
       });
     });
   }

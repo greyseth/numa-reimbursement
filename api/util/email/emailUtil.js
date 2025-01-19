@@ -49,7 +49,7 @@ const sendEmail = function (destinationAddress, values, callback) {
       // TODO: Change this value to destinationAddress
       // to: "anargya2gilland@gmail.com",
       to: destinationAddress,
-      subject: "Review Request Reimbursement",
+      subject: "Request Management Review",
       html: joinedHTML,
     };
 

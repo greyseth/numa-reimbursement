@@ -29,7 +29,7 @@ router.get("/self", (req, res) => {
 router.get("/all", requireRoles(["admin"]), (req, res) => {
   connection.query(
     `
-      SELECT users.id_user, users.username, users.email, users.nik, roles.role_name AS role
+      SELECT users.id_user, users.username, users.email, users.nik, roles.role_name AS role, users.active
       FROM users
       LEFT JOIN roles ON roles.id_role = users.id_role;
     `,
@@ -49,7 +49,7 @@ router.get("/roles", requireRoles(["admin"]), (req, res) => {
 
 router.get("/:id_user", requireRoles(["admin"]), (req, res) => {
   connection.query(
-    `SELECT username, email, nik, id_role FROM users WHERE id_user = ? LIMIT 1;`,
+    `SELECT username, email, nik, id_role, active FROM users WHERE id_user = ? LIMIT 1;`,
     [req.params.id_user],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err });
@@ -111,10 +111,10 @@ router.put(
   }
 );
 
-router.delete("/:id_user", requireRoles(["admin"]), (req, res) =>
+router.put("/:id_user/active/:active", requireRoles(["admin"]), (req, res) =>
   connection.query(
-    `DELETE FROM users WHERE id_user = ?`,
-    [req.params.id_user],
+    `UPDATE users SET active = ? WHERE id_user = ?`,
+    [req.params.active === "1" ? true : false, req.params.id_user],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err });
       res.sendStatus(200);

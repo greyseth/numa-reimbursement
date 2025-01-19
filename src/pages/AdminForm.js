@@ -126,7 +126,7 @@ export default function Page_AdminForm() {
         )}
       </select>
 
-      <label className="form-label">PASSWORD</label>
+      <label className="form-label">Create Password</label>
       <div className="relative">
         <input
           type={passwordVisible ? "text" : "password"}

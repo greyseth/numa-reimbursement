@@ -55,6 +55,7 @@ export default function Page_Admin() {
                 <th>Email</th>
                 <th>NIK</th>
                 <th>Role</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -69,6 +70,7 @@ export default function Page_Admin() {
                   <td>{u.email}</td>
                   <td>{u.nik}</td>
                   <td>{u.role}</td>
+                  <td>{u.active ? "ACTIVE" : "INACTIVE"}</td>
                 </tr>
               ))}
             </tbody>

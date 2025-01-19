@@ -231,7 +231,7 @@ export default function Page_ReimbursementView() {
               </div>
               <div>
                 <p className="font-normal text-gray-600">
-                  Reimbursement Repayment Type
+                  Request Repayment Type
                 </p>{" "}
                 {details.request.type}
               </div>
@@ -241,14 +241,15 @@ export default function Page_ReimbursementView() {
           {/* User Details */}
           <div className="bg-gray-200 border rounded-lg p-6 mb-8">
             <h2 className="font-semibold text-xl mb-4 text-black">
-              Requestor User Details
+              Requestor User Details{" "}
+              {!details.user.active ? "(INACtIVE USER)" : ""}
             </h2>
             <hr className="my-4 border-gray-300" />
 
             <div className="grid grid-cols-2 gap-4 text-sm font-semibold">
               <div>
                 <p className="font-normal text-gray-600">Username</p>{" "}
-                {details.user.username}
+                {details.user.username}{" "}
               </div>
               <div>
                 <p className="font-normal text-gray-600">Email</p>{" "}

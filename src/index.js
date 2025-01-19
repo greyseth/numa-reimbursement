@@ -35,15 +35,15 @@ const router = createBrowserRouter([
             element: <Page_Dashboard />,
           },
           {
-            path: "/reimbursement",
+            path: "/request",
             element: <Page_Reimbursement />,
           },
           {
-            path: "/reimbursement/new",
+            path: "/request/new",
             element: <Page_ReimbursementForm />,
           },
           {
-            path: "/reimbursement/view/:id_request",
+            path: "/request/view/:id_request",
             element: <Page_ReimbursementView />,
           },
           {

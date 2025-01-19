@@ -118,7 +118,7 @@ export default function RequestEditDetails({ details, setDetails, setClose }) {
           value={typeInput}
           onChange={(e) => setTypeInput(e.target.value)}
         >
-          <option value={"transfer"}>Transfer</option>
+          <option value={"reimburse"}>Reimburse</option>
           <option value={"petty cash"}>Petty Cash</option>
         </select>
 

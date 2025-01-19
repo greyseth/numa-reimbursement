@@ -99,7 +99,7 @@ export default function Page_ReimbursementForm() {
               loading: true,
               complete: true,
               onComplete: () =>
-                navigate("/reimbursement/view/" + response.id_request),
+                navigate("/request/view/" + response.id_request),
             });
           else {
             console.log(response);
@@ -170,7 +170,7 @@ export default function Page_ReimbursementForm() {
         value={type}
         onChange={(e) => setType(e.target.value)}
       >
-        <option value={"transfer"}>Transfer</option>
+        <option value={"reimburse"}>Reimburse</option>
         <option value={"petty cash"}>Petty Cash</option>
       </select>
 

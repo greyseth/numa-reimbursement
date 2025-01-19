@@ -89,14 +89,17 @@ export default function Page_AdminEdit() {
   async function handleDelete() {
     setLoading({ loading: true });
 
-    const response = await request("DELETE", "/users/" + id_user);
+    const response = await request(
+      "PUT",
+      `/users/${id_user}/active/${input.active ? "0" : "1"}`
+    );
     if (response && response.error)
       return setLoading({ loading: true, error: true });
 
     setLoading({
       loading: true,
       complete: true,
-      message: "User account has been deleted",
+      message: "User active status has been updated",
       onComplete: () => navigate("/admin"),
     });
   }
@@ -104,7 +107,9 @@ export default function Page_AdminEdit() {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="font-bold text-xl">Update Account Id {id_user}</h1>
+        <h1 className="font-bold text-xl">
+          Update Account Id {id_user} {!input.active ? "(INACTIVE)" : ""}
+        </h1>
         <button
           className="btn primary md:space-x-1"
           onClick={() => navigate("/admin")}
@@ -199,14 +204,15 @@ export default function Page_AdminEdit() {
             onClick={() =>
               setWarning({
                 headerMessage: "Confirm Process",
-                message:
-                  "Are you sure you want to delete this account? This will remove all data associated with the user (including requests and approvals)",
+                message: input.active
+                  ? "Are you sure you want to deactivate this account? User won't be able to log in using this account"
+                  : "Are you sure you want to reactivate this account? User will regain access",
                 confirmAction: handleDelete,
                 confirmDanger: true,
               })
             }
           >
-            Remove Account
+            {input.active ? "Deactivate Account" : "Activate Account"}
           </button>
         </>
       )}

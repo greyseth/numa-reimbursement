@@ -14,9 +14,9 @@ router.post(
     connection.query(
       `
         SELECT
-          requests.id_request, requests.title, requests.description, requests.date_created,
+          requests.id_request, requests.title, requests.description, requests.date_created, requests.type,
           owner.username As requestor_name,
-          requests_finance.status AS finance_status
+          requests_finance.status AS finance_status, requests_finance.filename AS finance_image
         FROM requests
         LEFT JOIN users owner ON owner.id_user = requests.id_user
         LEFT JOIN requests_finance ON requests_finance.id_request = requests.id_request
@@ -32,10 +32,11 @@ router.post(
         connection.query(
           `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased,
+              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
               items_approval.status
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
+            LEFT JOIN categories ON categories.id_category = items.id_category
             WHERE id_request IN (?)
           `,
           [requests.map((r) => r.id_request)],
@@ -51,12 +52,14 @@ router.post(
               requests.map((r) => ({
                 ...r,
                 date_created: formatDate(r.date_created),
+                finance_image:
+                  process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
                 items: r.items.map((ri) => ({
                   ...ri,
                   date_purchased: formatDate(ri.date_purchased),
                 })),
               })),
-              `REIMBURSEMENT REQUESTS ${req.body.month}/${req.body.year}`,
+              `REQUESTS ${req.body.month}/${req.body.year}`,
               res
             );
           }
@@ -74,9 +77,9 @@ router.post(
     connection.query(
       `
         SELECT
-          requests.id_request, requests.title, requests.description, requests.date_created,
+          requests.id_request, requests.title, requests.description, requests.date_created, requests.type,
           owner.username As requestor_name,
-          requests_finance.status AS finance_status
+          requests_finance.status AS finance_status, requests_finance.filename AS finance_image
         FROM requests
         LEFT JOIN users owner ON owner.id_user = requests.id_user
         LEFT JOIN requests_finance ON requests_finance.id_request = requests.id_request
@@ -92,10 +95,11 @@ router.post(
         connection.query(
           `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased,
+              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
               items_approval.status
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
+            LEFT JOIN categories ON categories.id_category = items.id_category
             WHERE id_request IN (?)
           `,
           [requests.map((r) => r.id_request)],
@@ -111,12 +115,14 @@ router.post(
               requests.map((r) => ({
                 ...r,
                 date_created: formatDate(r.date_created),
+                finance_image:
+                  process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
                 items: r.items.map((ri) => ({
                   ...ri,
                   date_purchased: formatDate(ri.date_purchased),
                 })),
               })),
-              `REIMBURSEMENT REQUESTS FROM ${req.body.from} TO ${req.body.to}`,
+              `REQUESTS FROM ${req.body.from} TO ${req.body.to}`,
               res
             );
           }
@@ -130,13 +136,15 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
   connection.query(
     `
       SELECT
-        requests.id_request, requests.title, requests.description, requests.date_created,
-        owner.username As requestor_name,
-        requests_finance.status AS finance_status
-      FROM requests
-      LEFT JOIN users owner ON owner.id_user = requests.id_user
-      LEFT JOIN requests_finance ON requests_finance.id_request = requests.id_request;
+          requests.id_request, requests.title, requests.description, requests.date_created, requests.type,
+          owner.username As requestor_name,
+          requests_finance.status AS finance_status, requests_finance.filename AS finance_image
+        FROM requests
+        LEFT JOIN users owner ON owner.id_user = requests.id_user
+        LEFT JOIN requests_finance ON requests_finance.id_request = requests.id_request
+      WHERE YEAR(date_created) = ?
     `,
+    [new Date().getFullYear()],
     (err, rows, fields) => {
       if (err) return res.status(500).json({ error: err });
       if (rows.length < 1) return res.status(404).json([]);
@@ -146,10 +154,11 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
       connection.query(
         `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased,
+              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
               items_approval.status
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
+            LEFT JOIN categories ON categories.id_category = items.id_category
             WHERE id_request IN (?)
           `,
         [requests.map((r) => r.id_request)],
@@ -165,12 +174,14 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
             requests.map((r) => ({
               ...r,
               date_created: formatDate(r.date_created),
+              finance_image:
+                process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
               items: r.items.map((ri) => ({
                 ...ri,
                 date_purchased: formatDate(ri.date_purchased),
               })),
             })),
-            "ALL REIMBURSEMENT REQUESTS",
+            new Date().getFullYear() + " REQUESTS",
             res
           );
         }
@@ -241,6 +252,11 @@ function createReport(data, header, res) {
         value: "description",
       },
       {
+        label: "Request Type",
+        width: 240,
+        value: "type",
+      },
+      {
         label: "Requestor Name",
         width: 160,
         value: "requestor_name",
@@ -254,6 +270,11 @@ function createReport(data, header, res) {
         label: "Items Name",
         width: 420,
         value: "item_name",
+      },
+      {
+        label: "Items Category",
+        width: 420,
+        value: "item_category",
       },
       {
         label: "Items Price",
@@ -276,6 +297,12 @@ function createReport(data, header, res) {
         label: "Finance Approval",
         width: 165,
         value: "finance_status",
+        centered: true,
+      },
+      {
+        label: "Payment Image URL",
+        width: 250,
+        value: "finance_image",
         centered: true,
       },
     ];

@@ -44,7 +44,7 @@ router.post("/login", requireParams(["email", "password"]), (req, res) => {
       roles.id_role, roles.role_name AS role 
       FROM users
       LEFT JOIN roles ON roles.id_role = users.id_role
-      WHERE email = ?
+      WHERE email = ? AND active = TRUE;
     `,
     [req.body.email],
     (err, rows, fields) => {

@@ -64,12 +64,12 @@ export default function Page_Reimbursement() {
       {/* Page header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-bold w-3/4 text-md md:text-xl">
-          Reimbursement Request Management
+          Request Management
         </h2>
         {loginData && loginData.role === "user" ? (
           <button
             className="btn primary md:space-x-1"
-            onClick={() => navigate("/reimbursement/new")}
+            onClick={() => navigate("/request/new")}
           >
             <span className="hidden md:inline">Add</span>{" "}
             <FontAwesomeIcon icon={faAdd} color="white" />
@@ -117,7 +117,7 @@ export default function Page_Reimbursement() {
           onChange={(e) => setSearch({ ...search, type: e.target.value })}
         >
           <option value={""}>All Requests</option>
-          <option value={"transfer"}>Transfer</option>
+          <option value={"reimburse"}>Reimburse</option>
           <option value={"petty cash"}>Petty Cash</option>
         </select>
       </div>
@@ -151,9 +151,7 @@ export default function Page_Reimbursement() {
                     <tr
                       key={r.id_request}
                       className="text-center border-y-2 cursor-pointer"
-                      onClick={() =>
-                        navigate(`/reimbursement/view/${r.id_request}`)
-                      }
+                      onClick={() => navigate(`/request/view/${r.id_request}`)}
                     >
                       <td>
                         REQUEST_{r.type === "petty cash" ? "PC" : "R"}
@@ -198,7 +196,7 @@ export default function Page_Reimbursement() {
                 onClick={() => {
                   if (page <= 1) return;
                   setPage((prevPage) => prevPage - 1);
-                  navigate("/reimbursement?page=" + (page - 1));
+                  navigate("/request?page=" + (page - 1));
                 }}
               />
               <input
@@ -207,12 +205,12 @@ export default function Page_Reimbursement() {
                 onChange={(e) => setPage(parseInt(e.target.value))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === "Escape")
-                    navigate("/reimbursement?page=" + page);
+                    navigate("/requesst?page=" + page);
                 }}
                 onBlur={(e) => {
                   if (page < 0) setPage(1);
 
-                  navigate("/reimbursement?page=" + page);
+                  navigate("/request?page=" + page);
                 }}
                 className="w-8 text-center outline-none"
               />
@@ -222,7 +220,7 @@ export default function Page_Reimbursement() {
                 className="cursor-pointer"
                 onClick={() => {
                   setPage((prevPage) => prevPage + 1);
-                  navigate("/reimbursement?page=" + (page + 1));
+                  navigate("/request?page=" + (page + 1));
                 }}
               />
             </div>
