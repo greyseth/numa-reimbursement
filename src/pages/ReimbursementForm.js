@@ -141,7 +141,7 @@ export default function Page_ReimbursementForm() {
         </h2>
         <button
           className="btn primary md:space-x-1"
-          onClick={() => navigate("/reimbursement")}
+          onClick={() => navigate("/request")}
         >
           <FontAwesomeIcon icon={faBackward} color="white" />
           <span className="hidden md:inline">Back</span>{" "}

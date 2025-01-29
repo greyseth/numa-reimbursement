@@ -205,7 +205,7 @@ export default function Page_Reimbursement() {
                 onChange={(e) => setPage(parseInt(e.target.value))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === "Escape")
-                    navigate("/requesst?page=" + page);
+                    navigate("/request?page=" + page);
                 }}
                 onBlur={(e) => {
                   if (page < 0) setPage(1);
