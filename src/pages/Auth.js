@@ -40,6 +40,7 @@ export default function Page_Auth() {
         window.localStorage.setItem("auth_token", response.auth_token);
 
         setLoginData({
+          id_user: response.id_user,
           username: response.username,
           email: response.email,
           phone: response.phone,

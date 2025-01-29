@@ -1,4 +1,5 @@
 export function verifyInput(inputs, onIncomplete, optionals) {
+  let incompleteParam = undefined;
   let isIncomplete = false;
 
   const params = Object.keys(inputs);
@@ -9,15 +10,24 @@ export function verifyInput(inputs, onIncomplete, optionals) {
     if (typeof inputs[param] === "number") {
       if (!inputs[param] && !inputs[param] === 0) isIncomplete = true;
     } else if (typeof inputs[param] === "boolean") continue;
-    else {
+    else if (typeof inputs[param] === "object") {
+      if (inputs[param].length) {
+        if (inputs[param].length < 1) isIncomplete = true;
+      } else {
+        if (Object.keys(inputs[param]).length < 1) isIncomplete = true;
+      }
+    } else {
       if (!inputs[param]) isIncomplete = true;
     }
 
-    if (isIncomplete) break;
+    if (isIncomplete) {
+      incompleteParam = params[i];
+      break;
+    }
   }
 
   if (isIncomplete) {
-    if (typeof onIncomplete === "function") onIncomplete();
+    if (typeof onIncomplete === "function") onIncomplete(incompleteParam);
 
     return false;
   } else return true;

@@ -21,6 +21,7 @@ export default function GlobalsContainer() {
           error={loading.error}
           complete={loading.complete}
           customMessage={loading.message}
+          onComplete={loading.onComplete}
         />
       ) : null}
 
@@ -30,6 +31,7 @@ export default function GlobalsContainer() {
           message={warning.message}
           singleConfirm={warning.singleConfirm}
           confirmDanger={warning.confirmDanger}
+          cancelAction={warning.cancelAction}
           confirmAction={warning.confirmAction}
         />
       ) : null}

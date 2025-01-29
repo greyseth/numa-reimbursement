@@ -9,7 +9,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "../LoadingSpinner";
 
-export default function GlobalLoading({ error, complete, customMessage }) {
+export default function GlobalLoading({
+  error,
+  complete,
+  customMessage,
+  onComplete,
+}) {
   const { loading, setLoading } = useContext(LoadingContext);
 
   useEffect(() => {
@@ -26,11 +31,15 @@ export default function GlobalLoading({ error, complete, customMessage }) {
 
   return (
     <PopupContainer zIndex={999}>
-      <div className="bg-[#1D1C21] p-6 rounded-lg" style={{ width: "300px" }}>
+      <div className="bg-primary p-6 rounded-lg" style={{ width: "300px" }}>
         {error ? (
           <Error setLoading={setLoading} customMessage={customMessage} />
         ) : complete ? (
-          <Complete setLoading={setLoading} customMessage={customMessage} />
+          <Complete
+            setLoading={setLoading}
+            customMessage={customMessage}
+            onComplete={onComplete}
+          />
         ) : (
           <BasicLoading customMessage={customMessage} />
         )}
@@ -101,7 +110,7 @@ function Error({ setLoading, customMessage }) {
   );
 }
 
-function Complete({ setLoading, customMessage }) {
+function Complete({ setLoading, customMessage, onComplete }) {
   return (
     <>
       <div className="border-b-2 border-white gap-4 pb-4 mb-4 flex items-center">
@@ -109,24 +118,27 @@ function Complete({ setLoading, customMessage }) {
           icon={faClose}
           color="white"
           className="cursor-pointer"
-          onClick={() =>
-            setLoading({ loading: false, error: false, complete: false })
-          }
+          onClick={() => {
+            if (typeof onComplete === "function") onComplete();
+            setLoading({ loading: false, error: false, complete: false });
+          }}
         />
-        <p className="text-white text-lg">Berhasil</p>
+        <p className="text-white text-lg">Success</p>
       </div>
       <FontAwesomeIcon
         icon={faCheckCircle}
         color="white"
         style={{
+          display: "block",
           width: "10em",
           height: "auto",
           aspectRatio: "1/1",
           margin: "0 auto",
+          marginBottom: "1em",
         }}
       />
       <p className="text-white text-center">
-        {customMessage ?? "Proses berhasil"}
+        {customMessage ?? "Process Complete"}
       </p>
     </>
   );

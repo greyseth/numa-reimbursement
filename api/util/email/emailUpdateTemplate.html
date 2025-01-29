@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      .hidden {
+        display: none !important;
+      }
+    </style>
+    <title>Review Request</title>
+  </head>
+  <body
+    style="padding: 2.5em; font-family: sans-serif; background-color: #ffffff"
+  >
+    <img src="https://i.ibb.co.com/51dpqC5/numa-Logo-transparent.png" />
+
+    <h2 style="margin-bottom: 1.5em">
+      A request you reviewed has been updated
+    </h2>
+    <div
+      style="
+        background-color: #f9fafc;
+        border: 1px solid gray;
+        border-radius: 10px;
+        padding: 1em;
+        margin-bottom: 2em;
+      "
+    >
+      <div
+        style="
+          padding-bottom: 1em;
+          border-bottom: 1px solid gray;
+          margin-bottom: 1em;
+        "
+      >
+        <h2>Request Details</h2>
+      </div>
+      <table width="100%" style="margin-bottom: 2em">
+        <tr>
+          <td><p style="color: gray">Title</p></td>
+          <td><p>$title$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">Description</p></td>
+          <td><p>$description$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">Payment Type</p></td>
+          <td><p>$type$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">Date Created</p></td>
+          <td><p>$date_created$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">Current Status</p></td>
+          <td><p>$status$</p></td>
+        </tr>
+      </table>
+    </div>
+
+    <div
+      style="
+        background-color: #f9fafc;
+        border: 1px solid gray;
+        border-radius: 10px;
+        padding: 1em;
+        margin-bottom: 2em;
+      "
+    >
+      <div
+        style="
+          padding-bottom: 1em;
+          border-bottom: 1px solid gray;
+          margin-bottom: 1em;
+        "
+      >
+        <h2>Requestor Details</h2>
+      </div>
+      <table width="100%" style="margin-bottom: 2em">
+        <tr>
+          <td><p style="color: gray">Username</p></td>
+          <td><p>$username$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">Email</p></td>
+          <td><p>$email$</p></td>
+        </tr>
+        <tr>
+          <td><p style="color: gray">NIK</p></td>
+          <td><p>$nik$</p></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- <div
+      style="
+        background-color: #f9fafc;
+        border: 1px solid gray;
+        border-radius: 10px;
+        padding: 1em;
+      "
+    >
+      <div
+        style="
+          padding-bottom: 1em;
+          border-bottom: 1px solid gray;
+          margin-bottom: 1em;
+        "
+      >
+        <h2>Status Approval</h2>
+      </div>
+      <table width="100%" cellspacing="0" cellpadding="10">
+        <tr $supervisor_hide$>
+          <td
+            width="33%"
+            style="background-color: #eff6ff; border-radius: 10px; padding: 1em"
+          >
+            <div style="position: relative">
+              <h2 style="text-align: center; color: #1e3a82; margin-top: 1em">
+                SUPERVISOR
+              </h2>
+            </div>
+            <textarea
+              readonly
+              placeholder="Catatan dari supervisor"
+              style="
+                width: 100%;
+                min-height: 100px;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5em;
+                resize: vertical;
+                margin-top: 1em;
+              "
+            >
+$supervisor_catatan$</textarea
+            >
+            <p style="margin-top: 1em">$supervisor_date$</p>
+            <p style="margin-top: 0.5em">
+              $supervisor_approval$ Oleh $supervisor_name$
+            </p>
+          </td>
+        </tr>
+        <tr $finance_hide$>
+          <td
+            width="33%"
+            style="background-color: #fbf5ff; border-radius: 10px; padding: 1em"
+          >
+            <div style="position: relative">
+              <h2 style="text-align: center; color: #581b88; margin-top: 1em">
+                FINANCE
+              </h2>
+            </div>
+            <textarea
+              readonly
+              placeholder="Catatan dari finance"
+              style="
+                width: 100%;
+                min-height: 100px;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5em;
+                resize: vertical;
+                margin-top: 1em;
+              "
+            >
+$finance_catatan$</textarea
+            >
+            <p style="margin-top: 1em">$finance_date$</p>
+            <p style="margin-top: 0.5em">
+              $finance_approval$ Oleh $finance_name$
+            </p>
+          </td>
+        </tr>
+        <tr $realisasi_hide$>
+          <td
+            width="33%"
+            style="background-color: #fefbe8; border-radius: 10px; padding: 1em"
+          >
+            <div style="position: relative">
+              <h2 style="text-align: center; color: #6a3f19; margin-top: 1em">
+                REALISASI
+              </h2>
+            </div>
+            <textarea
+              readonly
+              placeholder="Catatan dari realisasi"
+              style="
+                width: 100%;
+                min-height: 100px;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5em;
+                resize: vertical;
+                margin-top: 1em;
+              "
+            >
+$realisasi_catatan$</textarea
+            >
+            <p style="margin-top: 1em">$realisasi_date$</p>
+            <p style="margin-top: 0.5em">
+              $realisasi_approval$ Oleh $realisasi_name$
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div> -->
+
+    <a href="$url$" style="text-decoration: none">
+      <button
+        style="
+          padding: 1em;
+          font-size: 1.5em;
+          background-color: darkgreen;
+          color: white;
+          border-radius: 10px;
+          border: none;
+          margin-top: 2em;
+        "
+      >
+        Open Request
+      </button>
+    </a>
+  </body>
+</html>

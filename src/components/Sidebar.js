@@ -1,8 +1,11 @@
 import logo from "../assets/img/numaLogo_transparent.png";
 
 import {
+  faBars,
   faClose,
   faFileText,
+  faMoneyBill,
+  faPerson,
   faSignOut,
 } from "@fortawesome/free-solid-svg-icons";
 import { useContext, useEffect, useRef, useState } from "react";
@@ -25,9 +28,17 @@ export default function Sidebar() {
   const sidebarContent = [
     {
       icon: faFileText,
-      label: "Reimbursement",
-      route: "/reimbursement",
+      label: "Request Management",
+      route: "/request",
       onClick: () => {},
+      requireRoles: ["user", "approver", "finance"],
+    },
+    {
+      icon: faPerson,
+      label: "Users",
+      route: "/admin",
+      onClick: () => {},
+      requireRoles: ["admin"],
     },
     {
       icon: faSignOut,
@@ -73,10 +84,10 @@ export default function Sidebar() {
       {isMobile && !isSidebarOpen && (
         <div className="fixed top-3 left-6 z-50 p-4">
           <FontAwesomeIcon
-            icon={faClose}
+            icon={faBars}
             className="text-2xl cursor-pointer hover:text-gray-500 transition duration-100"
             onClick={toggleSidebar}
-            color="white"
+            color="black"
           />
         </div>
       )}
@@ -95,42 +106,53 @@ export default function Sidebar() {
         }`}
       >
         <div className="flex items-center pl-7 py-10">
-          <img src={logo} alt="Logo" className="w-44 h-auto rounded-xl" />
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-44 h-auto rounded-xl cursor-pointer"
+            onClick={() => navigate("/")}
+          />
         </div>
 
-        {sidebarContent.map((item, index) => {
-          const pathCheck =
-            location.pathname === "/" ? "/dash" : location.pathname;
-          const itemCheck = item.route === "/" ? "/dash" : item.route;
+        {loginData
+          ? sidebarContent.map((item, index) => {
+              if (item.requireRoles && item.requireRoles.length > 0) {
+                if (!item.requireRoles.includes(loginData.role)) return null;
+              }
 
-          return (
-            <ul className={`mt-2`} key={index}>
-              <li className={`py-2`}>
-                <div
-                  onClick={() => {
-                    if (typeof item.onClick === "function") item.onClick();
-                    navigate(item.route);
-                  }}
-                  className={
-                    "flex items-center text-white font-sans hover:bg-neutral-700 transition-all duration-200 h-10 w-full cursor-pointer " +
-                    (pathCheck.startsWith(itemCheck)
-                      ? "border-l-4 border-white"
-                      : "") +
-                    (item.customStyle ? item.customStyle : "")
-                  }
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  <FontAwesomeIcon
-                    icon={item.icon}
-                    className="mr-5 ml-10"
-                    style={{ width: "22px", height: "22px" }}
-                  />
-                  {item.label}
-                </div>
-              </li>
-            </ul>
-          );
-        })}
+              const pathCheck =
+                location.pathname === "/" ? "/dash" : location.pathname;
+              const itemCheck = item.route === "/" ? "/dash" : item.route;
+
+              return (
+                <ul className={`mt-2`} key={index}>
+                  <li className={`py-2`}>
+                    <div
+                      onClick={() => {
+                        if (typeof item.onClick === "function") item.onClick();
+                        navigate(item.route);
+                      }}
+                      className={
+                        "flex items-center text-white font-sans hover:bg-neutral-700 transition-all duration-200 h-10 w-full cursor-pointer " +
+                        (pathCheck.startsWith(itemCheck)
+                          ? "border-l-4 border-white"
+                          : "") +
+                        (item.customStyle ? item.customStyle : "")
+                      }
+                      style={{ fontFamily: "Poppins, sans-serif" }}
+                    >
+                      <FontAwesomeIcon
+                        icon={item.icon}
+                        className="mr-5 ml-10"
+                        style={{ width: "22px", height: "22px" }}
+                      />
+                      {item.label}
+                    </div>
+                  </li>
+                </ul>
+              );
+            })
+          : null}
       </div>
     </div>
   );
