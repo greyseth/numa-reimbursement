@@ -25,7 +25,7 @@ const sendEmail = function (destinationAddress, values, callback) {
       service: "gmail",
       auth: {
         user: "anargya2gilland@gmail.com",
-        pass: "sirb ihyw tiez avrb ",
+        pass: "sirb ihyw tiez avrb",
       },
     });
 
