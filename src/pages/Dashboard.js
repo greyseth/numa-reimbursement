@@ -1,3 +1,5 @@
+import numaLogo from "../assets/img/numaLogo_transparent.png";
+
 import { useContext, useEffect, useState } from "react";
 import {
   Bar,
@@ -64,34 +66,42 @@ export default function Page_Dashboard() {
       "GET",
       `/requests/yearly${selectedMonth == 0 ? "" : `/${selectedMonth}`}`
     );
-    if (response.error) setDataLoading({ error: true });
+    if (response.error) return setDataLoading({ error: true });
 
     setTransferData(
-      response.transfer.map((td, i) => ({ ...td, fill: MONTH_COLORS[i] }))
+      response.transfer.map((td, i) => ({
+        ...td,
+        amount: parseInt(td.amount),
+        fill: MONTH_COLORS[i],
+      }))
     );
     setPettyData(
-      response.petty.map((td, i) => ({ ...td, fill: MONTH_COLORS[i] }))
+      response.petty.map((td, i) => ({
+        ...td,
+        amount: parseInt(td.amount),
+        fill: MONTH_COLORS[i],
+      }))
     );
     setDataLoading(undefined);
   }
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (
+      loginData &&
+      (loginData.role === "approver" || loginData.role === "admin")
+    )
+      fetchData();
+  }, [loginData, selectedMonth]);
 
   useEffect(() => {
     let total = 0;
-    transferData.forEach((data) => (total += data.amount));
+    transferData.forEach((data) => (total += parseInt(data.amount)));
     setTransferTotal(total);
 
     let total2 = 0;
-    pettyData.forEach((data) => (total2 += data.amount));
+    pettyData.forEach((data) => (total2 += parseInt(data.amount)));
     setPrettyTotal(total2);
   }, [transferData, pettyData]);
-
-  useEffect(() => {
-    fetchData();
-  }, [selectedMonth]);
 
   return (
     <>
@@ -99,75 +109,122 @@ export default function Page_Dashboard() {
         {loginData ? `Welcome, ${loginData.username}` : null}
       </h1>
 
-      {dataLoading ? (
-        dataLoading.error ? (
-          <LoadingError onRetry={fetchData} />
+      {loginData &&
+      (loginData.role === "approver" || loginData.role === "admin") ? (
+        dataLoading ? (
+          dataLoading.error ? (
+            <LoadingError onRetry={fetchData} />
+          ) : (
+            <LoadingSpinner />
+          )
         ) : (
-          <LoadingSpinner />
+          <>
+            <select
+              className="p-1 bg-primary rounded text-white cursor-pointer mb-3"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            >
+              <option value={0}>All Year</option>
+              {months.map((m, i) => (
+                <option value={i + 1} key={i}>
+                  {m}
+                </option>
+              ))}
+            </select>
+
+            <h1 className="font-bold text-xl">
+              {new Date().getFullYear()} Reimbursement Stats
+            </h1>
+            <p className="mb-3">Year Total: {formatPrice(transferTotal)}</p>
+            {transferData.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="max-h-[350px] overflow-y-scroll">
+                  <table className="table w-full">
+                    <thead>
+                      <tr>
+                        <th>Category Name</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transferData.map((td) => (
+                        <tr>
+                          <td>{td.category}</td>
+                          <td>{formatPrice(td.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <ResponsiveContainer width={"100%"} height={400}>
+                  <PieChart>
+                    <Pie
+                      data={transferData}
+                      nameKey={"category"}
+                      dataKey={"amount"}
+                      innerRadius={30}
+                      label={renderCustomizedLabel}
+                      labelLine={false}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <h1 className="w-full text-center">
+                No requests in this category have been made yet
+              </h1>
+            )}
+
+            <hr className="h-1 bg-contrast mb-12"></hr>
+
+            <h1 className="font-bold text-xl">
+              {new Date().getFullYear()} Petty Cash Reimbursement Stats
+            </h1>
+            <p className="mb-3">Year Total: {formatPrice(pettyTotal)}</p>
+            {pettyData.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="max-h-[350px] overflow-y-scroll">
+                  <table className="table w-full">
+                    <thead>
+                      <tr>
+                        <th>Category Name</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pettyData.map((td) => (
+                        <tr>
+                          <td>{td.category}</td>
+                          <td>{formatPrice(td.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <ResponsiveContainer width={"100%"} height={400}>
+                  <PieChart>
+                    <Pie
+                      data={pettyData}
+                      nameKey={"category"}
+                      dataKey={"amount"}
+                      innerRadius={30}
+                      label={renderCustomizedLabel}
+                      labelLine={false}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <h1 className="w-full text-center">
+                No requests in this category have been made yet
+              </h1>
+            )}
+          </>
         )
       ) : (
-        <>
-          <select
-            className="p-1 bg-primary rounded text-white cursor-pointer mb-3"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          >
-            <option value={0}>All Year</option>
-            {months.map((m, i) => (
-              <option value={i + 1}>{m}</option>
-            ))}
-          </select>
-
-          <h1 className="font-bold text-xl">
-            {new Date().getFullYear()} Reimbursement Stats
-          </h1>
-          <p>Year Total: {formatPrice(transferTotal)}</p>
-          {transferData.length > 0 ? (
-            <ResponsiveContainer width={"100%"} height={400}>
-              <PieChart>
-                <Pie
-                  data={transferData}
-                  nameKey={"category"}
-                  dataKey={"amount"}
-                  innerRadius={30}
-                  label={renderCustomizedLabel}
-                  labelLine={false}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <h1 className="w-full text-center">
-              No requests in this category have been made yet
-            </h1>
-          )}
-
-          <hr className="h-1 bg-contrast mb-12"></hr>
-
-          <h1 className="font-bold text-xl">
-            {new Date().getFullYear()} Petty Cash Reimbursement Stats
-          </h1>
-          <p>Year Total: {formatPrice(pettyTotal)}</p>
-          {pettyData.length > 0 ? (
-            <ResponsiveContainer width={"100%"} height={400}>
-              <PieChart>
-                <Pie
-                  data={pettyData}
-                  nameKey={"category"}
-                  dataKey={"amount"}
-                  innerRadius={30}
-                  label={renderCustomizedLabel}
-                  labelLine={false}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <h1 className="w-full text-center">
-              No requests in this category have been made yet
-            </h1>
-          )}
-        </>
+        <img src={numaLogo} className="w-[80%] block mx-auto" />
       )}
     </>
   );

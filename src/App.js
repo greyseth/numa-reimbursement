@@ -6,11 +6,13 @@ import Sidebar from "./components/Sidebar";
 import { Outlet } from "react-router-dom";
 import Header from "./components/Header";
 import InfoHover from "./components/InfoHover";
+import AutomaticLogout from "./components/passive/AutomaticLogout";
 
 function App() {
   return (
     <>
       <LoginChecker />
+      <AutomaticLogout />
 
       <div className="app-container">
         <Sidebar />

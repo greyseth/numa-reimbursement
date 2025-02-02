@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post(
   "/month",
-  requireRoles(["finance", "approver"]),
+  requireRoles(["approver"]),
   requireParams(["month", "year"]),
   (req, res) => {
     connection.query(
@@ -32,12 +32,13 @@ router.post(
         connection.query(
           `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
-              items_approval.status
+              items.id_request, items.name, items.price, items.date_purchased, items.filename,
+              items_approval.status,
+              categories.category AS category
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             LEFT JOIN categories ON categories.id_category = items.id_category
-            WHERE id_request IN (?)
+            WHERE items.id_request IN (?) AND items_approval.status = 'approved'
           `,
           [requests.map((r) => r.id_request)],
           (err, rows, fields) => {
@@ -51,11 +52,17 @@ router.post(
             createReport(
               requests.map((r) => ({
                 ...r,
+                id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+                  .toString()
+                  .padStart(4, "0")}`,
                 date_created: formatDate(r.date_created),
-                finance_image:
-                  process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
+                finance_image: r.finance_image
+                  ? process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image
+                  : "",
                 items: r.items.map((ri) => ({
                   ...ri,
+                  filename:
+                    process.env.BACKEND_HOSTNAME + "/img/" + ri.filename,
                   date_purchased: formatDate(ri.date_purchased),
                 })),
               })),
@@ -71,7 +78,7 @@ router.post(
 
 router.post(
   "/date",
-  requireRoles(["finance", "approver"]),
+  requireRoles(["approver"]),
   requireParams(["from", "to"]),
   (req, res) => {
     connection.query(
@@ -95,12 +102,13 @@ router.post(
         connection.query(
           `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
-              items_approval.status
+              items.id_request, items.name, items.price, items.date_purchased, items.filename,
+              items_approval.status,
+              categories.category AS category
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             LEFT JOIN categories ON categories.id_category = items.id_category
-            WHERE id_request IN (?)
+            WHERE items.id_request IN (?) AND items_approval.status = 'approved'
           `,
           [requests.map((r) => r.id_request)],
           (err, rows, fields) => {
@@ -114,11 +122,17 @@ router.post(
             createReport(
               requests.map((r) => ({
                 ...r,
+                id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+                  .toString()
+                  .padStart(4, "0")}`,
                 date_created: formatDate(r.date_created),
-                finance_image:
-                  process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
+                finance_image: r.finance_image
+                  ? process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image
+                  : "",
                 items: r.items.map((ri) => ({
                   ...ri,
+                  filename:
+                    process.env.BACKEND_HOSTNAME + "/img/" + ri.filename,
                   date_purchased: formatDate(ri.date_purchased),
                 })),
               })),
@@ -132,7 +146,7 @@ router.post(
   }
 );
 
-router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
+router.post("/all", requireRoles(["approver"]), (req, res) => {
   connection.query(
     `
       SELECT
@@ -154,12 +168,13 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
       connection.query(
         `
             SELECT
-              items.id_request, items.name, items.price, items.date_purchased, categories.category AS category,
-              items_approval.status
+              items.id_request, items.name, items.price, items.date_purchased, items.filename,
+              items_approval.status,
+              categories.category AS category
             FROM items
             LEFT JOIN items_approval ON items_approval.id_item = items.id_item
             LEFT JOIN categories ON categories.id_category = items.id_category
-            WHERE id_request IN (?)
+            WHERE items.id_request IN (?) AND items_approval.status = 'approved'
           `,
         [requests.map((r) => r.id_request)],
         (err, rows, fields) => {
@@ -173,11 +188,16 @@ router.post("/all", requireRoles(["finance", "approver"]), (req, res) => {
           createReport(
             requests.map((r) => ({
               ...r,
+              id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+                .toString()
+                .padStart(4, "0")}`,
               date_created: formatDate(r.date_created),
-              finance_image:
-                process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image,
+              finance_image: r.finance_image
+                ? process.env.BACKEND_HOSTNAME + "/img/" + r.finance_image
+                : "",
               items: r.items.map((ri) => ({
                 ...ri,
+                filename: process.env.BACKEND_HOSTNAME + "/img/" + ri.filename,
                 date_purchased: formatDate(ri.date_purchased),
               })),
             })),
@@ -236,7 +256,7 @@ function createReport(data, header, res) {
     const columns = [
       {
         label: "ID",
-        width: 80,
+        width: 260,
         centered: true,
         value: "id_request",
         number: true,
@@ -294,13 +314,19 @@ function createReport(data, header, res) {
         centered: true,
       },
       {
+        label: "Items Invoice Doc",
+        width: 250,
+        value: "item_filename",
+        centered: true,
+      },
+      {
         label: "Finance Approval",
         width: 165,
         value: "finance_status",
         centered: true,
       },
       {
-        label: "Payment Image URL",
+        label: "Transaction Proof",
         width: 250,
         value: "finance_image",
         centered: true,

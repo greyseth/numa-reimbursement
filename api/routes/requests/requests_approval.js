@@ -7,51 +7,60 @@ const statusCheck = require("../../util/email/statusCheck");
 const router = express.Router();
 
 // Creates approval for individual request items
-router.put("/item/:id_item", requireRoles(["approver"]), (req, res) => {
+router.put("/item/:id_item", requireRoles(["verification"]), (req, res) => {
   // Optional parameters: approved (boolean), notes (string)
 
-  // Verifies that item is still pending
-  connection.query(
-    `SELECT 
-      items.id_request, status 
+  singleUpload(req, res, (err) => {
+    if (err) return res.status(500).json({ error: err });
+
+    // Verifies that item is still pending and user didn't create it themselves
+    connection.query(
+      `SELECT 
+      items.id_request, items_approval.status 
     FROM items_approval 
     LEFT JOIN items ON items.id_item = items_approval.id_item
-    WHERE items_approval.id_item = ?`,
-    [req.params.id_item],
-    (err, rows, fields) => {
-      if (err) return res.status(500).json({ error: err });
-      if (rows.length < 1)
-        return res.status(404).json({ error: "id_item not found" });
+    LEFT JOIN requests ON requests.id_request = items.id_request
+    WHERE items_approval.id_item = ? AND requests.id_user != ?`,
+      [req.params.id_item, req.id_user],
+      (err, rows, fields) => {
+        if (err) return res.status(500).json({ error: err });
+        if (rows.length < 1)
+          return res.status(404).json({ error: "id_item not found" });
 
-      const id_request = rows[0].id_request;
+        const id_request = rows[0].id_request;
 
-      if (rows[0].status === "pending") {
-        connection.query(
-          `
-          UPDATE items_approval 
-          SET id_approver = ?, status = ?, notes = ?, approval_date = NOW() 
-          WHERE id_item = ?;
-        `,
-          [
-            req.id_user,
-            req.body.approved ? "approved" : "rejected",
-            req.body.notes ?? "",
-            req.params.id_item,
-          ],
-          (err, rows, fields) => {
-            if (err) return res.status(500).json({ error: err });
-            statusCheck(false, id_request);
+        const status = req.body.approved ? "approved" : "rejected";
 
-            res.sendStatus(200);
-          }
-        );
-      } else res.status(401).json({ error: "Item already has been approved" });
-    }
-  );
+        if (rows[0].status === "pending") {
+          connection.query(
+            `
+              UPDATE items_approval 
+              SET id_approver = ?, status = ?, notes = ?, approval_date = NOW(), file = ?
+              WHERE id_item = ?;
+            `,
+            [
+              req.id_user,
+              status,
+              req.body.notes ?? "",
+              req.file ? req.file.filename : null,
+              req.params.id_item,
+            ],
+            (err, rows, fields) => {
+              if (err) return res.status(500).json({ error: err });
+              statusCheck(false, id_request);
+
+              res.sendStatus(200);
+            }
+          );
+        } else
+          res.status(401).json({ error: "Item already has been approved" });
+      }
+    );
+  });
 });
 
 // Creates finance payment approval for requests
-router.put("/payment/:id_request", requireRoles(["finance"]), (req, res) => {
+router.put("/payment/:id_request", requireRoles(["approver"]), (req, res) => {
   // Optional params: {approved: boolean, notes: string}
 
   singleUpload(req, res, (err) => {
@@ -59,8 +68,12 @@ router.put("/payment/:id_request", requireRoles(["finance"]), (req, res) => {
 
     // Verifies that request is approved before actually updating
     connection.query(
-      `SELECT status FROM requests_finance WHERE id_request = ?`,
-      [req.params.id_request],
+      `
+        SELECT status FROM requests_finance 
+        LEFT JOIN requests ON requests.id_request = requests_finance.id_request
+        WHERE id_request = ? AND requests.id_user != ?
+      `,
+      [req.params.id_request, req.id_user],
       (err, rows, fields) => {
         if (err) return res.status(500).json({ error: err });
         if (rows.length < 1)

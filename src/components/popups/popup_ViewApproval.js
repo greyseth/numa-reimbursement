@@ -27,6 +27,15 @@ export default function ViewApprovalPopup({ approval, setClose }) {
           {approval.status.toUpperCase()} by {approval.approver}
         </p>
         <p className="text-white">on {formatDate(approval.date)}</p>
+
+        {approval.file ? (
+          <a
+            href={process.env.REACT_APP_APIHOST + "/img/" + approval.file}
+            target="_blank"
+          >
+            <button className="btn secondary full mt-3">View Attachment</button>
+          </a>
+        ) : null}
       </div>
     </PopupContainer>
   );
