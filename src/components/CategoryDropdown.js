@@ -14,6 +14,7 @@ export default function CategoryDropdown({ className, onChange }) {
 
     setCats(response);
     setSelected(response[0]);
+    onChange(response[0]);
     setLoadingData(undefined);
   }
 

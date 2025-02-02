@@ -28,18 +28,36 @@ router.post("/search/:page_num", (req, res) => {
       clause: "AND requests.id_user = ?",
       value: req.id_user,
     });
-  else if (req.id_role === 2)
+  else if (req.id_role === 2) {
     // APPROVER role
     optionalChecks.push({
-      clause: "AND requests.status = 'pending' OR requests.status = 'rejected'",
+      clause:
+        "AND (requests.status = 'pending' OR requests.status = 'rejected' OR requests.status = 'approved')",
       value: null,
     });
-  else if (req.id_role === 3)
+
+    optionalChecks.push({
+      clause:
+        req.body.owner === "toapprove"
+          ? `AND requests.id_user != ?`
+          : `AND requests.id_user = ?`,
+      value: req.id_user,
+    });
+  } else if (req.id_role === 3) {
     // FINANCE role
     optionalChecks.push({
-      clause: "AND requests.status = 'approved' OR requests.status = 'paid'",
+      clause: "AND (requests.status = 'approved' OR requests.status = 'paid')",
       value: null,
     });
+
+    optionalChecks.push({
+      clause:
+        req.body.owner === "toapprove"
+          ? `AND requests.id_user != ?`
+          : `AND requests.id_user = ?`,
+      value: req.id_user,
+    });
+  }
 
   if (req.body.search)
     optionalChecks.push({
@@ -88,7 +106,7 @@ router.post("/search/:page_num", (req, res) => {
   );
 });
 
-router.post("/", requireRoles(["user"]), (req, res) => {
+router.post("/", (req, res) => {
   arrayUpload(req, res, (err) => {
     if (err) return res.status(500).json({ error: err });
 
@@ -162,7 +180,7 @@ router.post("/", requireRoles(["user"]), (req, res) => {
   });
 });
 
-router.get("/yearly", (req, res) => {
+router.get("/yearly", requireRoles(["approver", "admin"]), (req, res) => {
   connection.query(
     `
       SELECT 
@@ -203,24 +221,27 @@ router.get("/yearly", (req, res) => {
   );
 });
 
-router.get("/yearly/:month", (req, res) => {
-  connection.query(
-    `
+router.get(
+  "/yearly/:month",
+  requireRoles(["approver", "admin"]),
+  (req, res) => {
+    connection.query(
+      `
       SELECT 
         categories.category, SUM(items.price) AS amount
       FROM categories 
       LEFT JOIN items ON items.id_category = categories.id_category 
       LEFT JOIN requests ON requests.id_request = items.id_request
-      WHERE YEAR(requests.date_created) = ? AND MONTH(requests.date_created) = ? AND requests.type = 'transfer'
+      WHERE YEAR(requests.date_created) = ? AND MONTH(requests.date_created) = ? AND requests.type = 'reimburse'
       GROUP BY categories.id_category;
     `,
-    [new Date().getFullYear(), req.params.month],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err });
-      const transfer = rows;
+      [new Date().getFullYear(), req.params.month],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: err });
+        const transfer = rows;
 
-      connection.query(
-        `
+        connection.query(
+          `
           SELECT 
             categories.category, SUM(items.price) AS amount 
           FROM categories 
@@ -229,31 +250,35 @@ router.get("/yearly/:month", (req, res) => {
           WHERE YEAR(requests.date_created) = ? AND MONTH(requests.date_created) = ? AND requests.type = 'petty cash'
           GROUP BY categories.id_category;
         `,
-        [new Date().getFullYear(), req.params.month],
-        (err, rows) => {
-          if (err) return res.status(500).json({ error: err });
-          const pettyCash = rows;
+          [new Date().getFullYear(), req.params.month],
+          (err, rows) => {
+            if (err) return res.status(500).json({ error: err });
+            const pettyCash = rows;
 
-          res.status(200).json({
-            transfer: transfer,
-            petty: pettyCash,
-          });
-        }
-      );
-    }
-  );
-});
+            res.status(200).json({
+              transfer: transfer,
+              petty: pettyCash,
+            });
+          }
+        );
+      }
+    );
+  }
+);
 
 router.get("/:id_request", (req, res) => {
   connection.query(
     `
-      SELECT requests.*, SUM(items.price) AS total_price, 
+      SELECT 
+        requests.*, SUM(items.price) AS total_price, 
         users.id_user AS requestor_id, users.username AS requestor_name, 
         users.email AS requestor_email, users.nik AS requestor_nik, users.active AS requestor_active,
+        roles.role_name,
         finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
         finance.username AS finance_name, finance.email AS finance_email
       FROM requests
       LEFT JOIN users ON users.id_user = requests.id_user
+      LEFT JOIN roles ON roles.id_role = users.id_role
       LEFT JOIN items ON items.id_request = requests.id_request
       LEFT JOIN requests_finance finance_app ON finance_app.id_request = requests.id_request
       LEFT JOIN users finance ON finance.id_user = finance_app.id_finance
@@ -279,6 +304,7 @@ router.get("/:id_request", (req, res) => {
         email: rows[0].requestor_email,
         nik: rows[0].requestor_nik,
         active: rows[0].requestor_active,
+        role: rows[0].role_name,
       };
 
       let financeApproval = {
@@ -300,7 +326,7 @@ router.get("/:id_request", (req, res) => {
           SELECT 
             items.*, 
             categories.*,
-            app.status AS approval_status, app.notes AS approval_notes, app.approval_date,
+            app.status AS approval_status, app.notes AS approval_notes, app.approval_date, app.file,
             users.username AS approval_username
           FROM items 
           LEFT JOIN items_approval app ON app.id_item = items.id_item
@@ -336,6 +362,7 @@ router.get("/:id_request", (req, res) => {
                 approval.notes = rCopy.approval_notes;
                 approval.date = rCopy.approval_date;
                 approval.approver = rCopy.approval_username;
+                approval.file = rCopy.file;
               }
 
               delete rCopy.approval_status;
@@ -354,7 +381,6 @@ router.get("/:id_request", (req, res) => {
 
 router.put(
   "/:id_request/details",
-  requireRoles(["user", "admin"]),
   requireParams(["title", "bank_name", "bank_number", "type"]),
   async (req, res) => {
     // Params: {title: '', description: ''}
@@ -362,9 +388,8 @@ router.put(
     let authorized = false;
 
     if (req.id_role === 4) authorized = true;
-
-    // Checks if user created the request
-    if (req.id_role === 1) {
+    else {
+      // Checks if the user created the request
       const query = util.promisify(connection.query).bind(connection);
       const checkResult = await query(
         "SELECT id_user FROM requests WHERE id_request = " +
@@ -397,173 +422,161 @@ router.put(
   }
 );
 
-router.put(
-  "/:id_request/items",
-  requireRoles(["user", "admin"]),
-  async (req, res) => {
-    // Parameters: {toDelete: JSONarray, toAdd: JSONarray, images: files}
+router.put("/:id_request/items", async (req, res) => {
+  // Parameters: {toDelete: JSONarray, toAdd: JSONarray, images: files}
 
-    let authorized = false;
+  let authorized = false;
 
-    if (req.id_role === 4) authorized = true;
-
+  if (req.id_role === 4) authorized = true;
+  else {
     // Checks if user created the request
-    if (req.id_role === 1) {
-      const query = util.promisify(connection.query).bind(connection);
-      const checkResult = await query(
-        "SELECT id_user FROM requests WHERE id_request = " +
-          req.params.id_request
-      );
+    const query = util.promisify(connection.query).bind(connection);
+    const checkResult = await query(
+      "SELECT id_user FROM requests WHERE id_request = " + req.params.id_request
+    );
 
-      if (checkResult.length < 1)
-        return res.status(404).json({ error: "id_request not found" });
-      if (req.id_user === checkResult[0].id_user) authorized = true;
-    }
+    if (checkResult.length < 1)
+      return res.status(404).json({ error: "id_request not found" });
+    if (req.id_user === checkResult[0].id_user) authorized = true;
+  }
 
-    if (!authorized)
-      return res.status(401).json({ error: "Unauthorized access" });
+  if (!authorized)
+    return res.status(401).json({ error: "Unauthorized access" });
 
-    arrayUpload(req, res, (err) => {
-      if (err) return res.status(500).json({ error: err });
+  arrayUpload(req, res, (err) => {
+    if (err) return res.status(500).json({ error: err });
 
-      sendUpdateEmail(req.params.id_request, () => {
-        connection.beginTransaction((err) => {
-          if (err) return res.status(500).json({ error: err });
+    sendUpdateEmail(req.params.id_request, () => {
+      connection.beginTransaction((err) => {
+        if (err) return res.status(500).json({ error: err });
 
-          // Deletes items
-          const deleteItems = JSON.parse(req.body.toDelete);
-          connection.query(
-            deleteItems.length > 0
-              ? `DELETE FROM items WHERE id_item IN (?)`
-              : "SELECT NULL",
-            [deleteItems],
-            (err, rows, fields) => {
-              if (err)
-                return connection.rollback(() =>
-                  res.status(500).json({ error: err })
-                );
+        // Deletes items
+        const deleteItems = JSON.parse(req.body.toDelete);
+        connection.query(
+          deleteItems.length > 0
+            ? `DELETE FROM items WHERE id_item IN (?)`
+            : "SELECT NULL",
+          [deleteItems],
+          (err, rows, fields) => {
+            if (err)
+              return connection.rollback(() =>
+                res.status(500).json({ error: err })
+              );
 
-              //Inserts new items
-              const items = JSON.parse(req.body.toAdd).map((i, ii) => [
-                req.params.id_request,
-                i.name,
-                i.price,
-                i.date,
-                req.files[ii].filename,
-              ]);
-              connection.query(
-                items.length > 0
-                  ? `INSERT INTO items(id_request, name, price, date_purchased, filename) VALUES ?`
-                  : "SELECT NULL",
-                [items],
-                (err, rows, fields) => {
-                  if (err)
-                    return connection.rollback(() =>
-                      res.status(500).json({ error: err })
-                    );
+            //Inserts new items
+            const items = JSON.parse(req.body.toAdd).map((i, ii) => [
+              req.params.id_request,
+              i.name,
+              i.price,
+              i.date,
+              req.files[ii].filename,
+            ]);
+            connection.query(
+              items.length > 0
+                ? `INSERT INTO items(id_request, name, price, date_purchased, filename) VALUES ?`
+                : "SELECT NULL",
+              [items],
+              (err, rows, fields) => {
+                if (err)
+                  return connection.rollback(() =>
+                    res.status(500).json({ error: err })
+                  );
 
-                  connection.query(
-                    `
+                connection.query(
+                  `
                     SELECT items_approval.status 
                     FROM items 
                     LEFT JOIN items_approval ON items_approval.id_item = items.id_item 
                     WHERE items.id_request = ?
                   `,
-                    [req.params.id_request],
-                    (err, rows) => {
-                      if (err)
-                        return connection.rollback(() =>
-                          res.status(500).json({ error: err })
-                        );
-                      if (rows.length < 1)
-                        return connection.rollback(() =>
-                          res
-                            .status(500)
-                            .json({ error: "Items list cannot be empty" })
-                        );
-
-                      let setStatus = "approved";
-                      let isRejected = false;
-                      rows.forEach((r) => {
-                        if (r.status === "pending") setStatus = "pending";
-                        else if (r.status === "rejected") isRejected = true;
-                      });
-
-                      connection.query(
-                        `UPDATE requests SET status = ? WHERE id_request = ?`,
-                        [
-                          isRejected ? "rejected" : setStatus,
-                          req.params.id_request,
-                        ],
-                        (err, rows) => {
-                          if (err)
-                            return connection.rollback(() =>
-                              res.status(500).json({ error: err })
-                            );
-
-                          connection.query(
-                            `DELETE FROM requests_finance WHERE id_request = ?`,
-                            [req.params.id_request],
-                            (err, rows) => {
-                              if (err)
-                                return connection.rollback(() =>
-                                  res.status(500).json({ error: err })
-                                );
-                              connection.commit((err) => {
-                                if (err)
-                                  return res.status(500).json({ error: err });
-
-                                res.sendStatus(200);
-                              });
-                            }
-                          );
-                        }
+                  [req.params.id_request],
+                  (err, rows) => {
+                    if (err)
+                      return connection.rollback(() =>
+                        res.status(500).json({ error: err })
                       );
-                    }
-                  );
-                }
-              );
-            }
-          );
-        });
+                    if (rows.length < 1)
+                      return connection.rollback(() =>
+                        res
+                          .status(500)
+                          .json({ error: "Items list cannot be empty" })
+                      );
+
+                    let setStatus = "approved";
+                    let isRejected = false;
+                    rows.forEach((r) => {
+                      if (r.status === "pending") setStatus = "pending";
+                      else if (r.status === "rejected") isRejected = true;
+                    });
+
+                    connection.query(
+                      `UPDATE requests SET status = ? WHERE id_request = ?`,
+                      [
+                        isRejected ? "rejected" : setStatus,
+                        req.params.id_request,
+                      ],
+                      (err, rows) => {
+                        if (err)
+                          return connection.rollback(() =>
+                            res.status(500).json({ error: err })
+                          );
+
+                        connection.query(
+                          `UPDATE requests_finance SET status = 'pending', notes = NULL, approval_date = NULL, filename = NULL, id_finance = NULL WHERE id_request = ?`,
+                          [req.params.id_request],
+                          (err, rows) => {
+                            if (err)
+                              return connection.rollback(() =>
+                                res.status(500).json({ error: err })
+                              );
+                            connection.commit((err) => {
+                              if (err)
+                                return res.status(500).json({ error: err });
+
+                              res.sendStatus(200);
+                            });
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
       });
     });
-  }
-);
+  });
+});
 
-router.delete(
-  "/:id_request",
-  requireRoles(["user", "admin"]),
-  async (req, res) => {
-    let authorized = false;
+router.delete("/:id_request", async (req, res) => {
+  let authorized = false;
 
-    if (req.id_role === 4) authorized = true;
-
-    // Checks if user created the request
-    if (req.id_role === 1) {
-      const query = util.promisify(connection.query).bind(connection);
-      const checkResult = await query(
-        "SELECT id_user FROM requests WHERE id_request = " +
-          req.params.id_request
-      );
-
-      if (checkResult.length < 1)
-        return res.status(404).json({ error: "id_request not found" });
-      if (req.id_user === checkResult[0].id_user) authorized = true;
-    }
-
-    if (!authorized)
-      return res.status(401).json({ error: "Unauthorized access" });
-
-    connection.query(
-      `DELETE FROM requests WHERE id_request = ?`,
-      [req.params.id_request],
-      (err, rows, fields) => {
-        if (err) return res.status(500).json({ error: err });
-        res.sendStatus(200);
-      }
+  if (req.id_role === 4) authorized = true;
+  else {
+    // Checks if the user created the request
+    const query = util.promisify(connection.query).bind(connection);
+    const checkResult = await query(
+      "SELECT id_user FROM requests WHERE id_request = " + req.params.id_request
     );
+
+    if (checkResult.length < 1)
+      return res.status(404).json({ error: "id_request not found" });
+    if (req.id_user === checkResult[0].id_user) authorized = true;
   }
-);
+
+  if (!authorized)
+    return res.status(401).json({ error: "Unauthorized access" });
+
+  connection.query(
+    `DELETE FROM requests WHERE id_request = ?`,
+    [req.params.id_request],
+    (err, rows, fields) => {
+      if (err) return res.status(500).json({ error: err });
+      res.sendStatus(200);
+    }
+  );
+});
 
 module.exports = router;

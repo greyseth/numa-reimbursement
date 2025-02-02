@@ -38,6 +38,7 @@ export default function CreateExport({ setClose }) {
           `Bearer ${window.localStorage.getItem("auth_token")}`
         );
 
+        console.log(monthInput.month);
         const urlencoded = new URLSearchParams();
         if (range === "month") {
           urlencoded.append("month", monthInput.month);
@@ -46,6 +47,8 @@ export default function CreateExport({ setClose }) {
           urlencoded.append("from", dateInput.from);
           urlencoded.append("to", dateInput.to);
         }
+
+        console.log(urlencoded);
 
         const request = await fetch(
           process.env.REACT_APP_APIHOST + `/requests/export/${range}`,
@@ -136,7 +139,9 @@ export default function CreateExport({ setClose }) {
             <select
               className="form-input mb-4"
               value={monthInput.month}
-              onChange={(e) => setMonthInput(e.target.value)}
+              onChange={(e) =>
+                setMonthInput({ ...monthInput, month: e.target.value })
+              }
             >
               <option value={1}>January</option>
               <option value={2}>February</option>

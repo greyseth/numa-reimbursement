@@ -5,7 +5,12 @@ import { faFileUpload } from "@fortawesome/free-solid-svg-icons";
 const { useContext, useState } = require("react");
 const { WarningContext } = require("../providers/WarningProvider");
 
-export default function FileInput({ setValue, setDisplayValue, singleFile }) {
+export default function FileInput({
+  setValue,
+  setDisplayValue,
+  singleFile,
+  labelOptions,
+}) {
   const { warning, setWarning } = useContext(WarningContext);
   const [hovering, setHovering] = useState(false);
 
@@ -13,9 +18,13 @@ export default function FileInput({ setValue, setDisplayValue, singleFile }) {
     <div className="mb-4">
       <label
         htmlFor="small-input"
-        className="block mt-3 mb-2 text-sm font-medium text-gray-900"
+        className={`block mt-3 mb-2 text-sm font-medium ${
+          labelOptions && labelOptions.color
+            ? labelOptions.color
+            : "text-gray-900"
+        }`}
       >
-        File Upload
+        {labelOptions && labelOptions.text ? labelOptions.text : "File Upload"}
       </label>
 
       <div
@@ -41,7 +50,7 @@ export default function FileInput({ setValue, setDisplayValue, singleFile }) {
                   "png",
                   "jpeg",
                   "jpg",
-                  "bmp",
+                  "pdf",
                 ])
               )
                 names.push(e.dataTransfer.files[i].name);
@@ -80,14 +89,14 @@ export default function FileInput({ setValue, setDisplayValue, singleFile }) {
               </span>
             </p>
             {!hovering ? (
-              <p className="text-xs text-gray-500">PNG, JPG, JPEG, or BMP</p>
+              <p className="text-xs text-gray-500">PNG, JPG, JPEG, or PDF</p>
             ) : null}
           </div>
           <input
             id="dropzone-file"
             type="file"
             className="hidden"
-            accept="image/jpg, image/jpeg, image/png, image/bmp"
+            accept="image/jpg, image/jpeg, image/png, image/bmp, application/pdf"
             multiple={!singleFile}
             onChange={(e) => {
               setValue(e.target.files);

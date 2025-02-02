@@ -31,6 +31,7 @@ export default function Page_Reimbursement() {
     days: undefined,
     orderBy: undefined,
     type: undefined,
+    owner: "toapprove",
   });
   const [page, setPage] = useState(queryParams.get("page") ?? 1);
 
@@ -66,7 +67,8 @@ export default function Page_Reimbursement() {
         <h2 className="font-bold w-3/4 text-md md:text-xl">
           Request Management
         </h2>
-        {loginData && loginData.role === "user" ? (
+
+        <div className="space-x-2">
           <button
             className="btn primary md:space-x-1"
             onClick={() => navigate("/request/new")}
@@ -74,15 +76,17 @@ export default function Page_Reimbursement() {
             <span className="hidden md:inline">Add</span>{" "}
             <FontAwesomeIcon icon={faAdd} color="white" />
           </button>
-        ) : (
-          <button
-            className="btn primary md:space-x-1"
-            onClick={() => setExportPopup(true)}
-          >
-            <span className="hidden md:inline">Export</span>{" "}
-            <FontAwesomeIcon icon={faReceipt} color="white" />
-          </button>
-        )}
+
+          {loginData && loginData.role === "approver" ? (
+            <button
+              className="btn primary md:space-x-1"
+              onClick={() => setExportPopup(true)}
+            >
+              <span className="hidden md:inline">Export</span>{" "}
+              <FontAwesomeIcon icon={faReceipt} color="white" />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Search and filters */}
@@ -120,6 +124,17 @@ export default function Page_Reimbursement() {
           <option value={"reimburse"}>Reimburse</option>
           <option value={"petty cash"}>Petty Cash</option>
         </select>
+        {loginData &&
+        (loginData.role === "verification" || loginData.role === "approver") ? (
+          <select
+            className="dropdown"
+            value={search.owner}
+            onChange={(e) => setSearch({ ...search, owner: e.target.value })}
+          >
+            <option value={"toapprove"}>To Approve</option>
+            <option value={"myrequests"}>Your Requests</option>
+          </select>
+        ) : null}
       </div>
 
       <div className="w-full bg-gray-300 h-[1px] mb-4"></div>
@@ -154,7 +169,8 @@ export default function Page_Reimbursement() {
                       onClick={() => navigate(`/request/view/${r.id_request}`)}
                     >
                       <td>
-                        REQUEST_{r.type === "petty cash" ? "PC" : "R"}
+                        {r.type === "petty cash" ? "PC" : "R"}-NMA-
+                        {formatDate(r.date_created)}-
                         {r.id_request.toString().padStart(4, "0")}
                       </td>
                       <td className="min-w-72">{r.title}</td>

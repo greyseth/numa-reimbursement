@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { WarningContext } from "../../providers/WarningProvider";
 import PopupContainer from "../PopupContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,7 +14,19 @@ export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
   const [descriptionInput, setDescriptionInput] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [priceInput, setPriceInput] = useState("");
+  const [pricePreview, setPricePreview] = useState("");
+  const [inputtingPrice, setInputtingPrice] = useState(false);
   const [fileInput, setFileInput] = useState([]);
+
+  const priceInputRef = useRef();
+
+  useEffect(() => {
+    setPricePreview(new Intl.NumberFormat("en-ID").format(priceInput));
+  }, [priceInput]);
+
+  useEffect(() => {
+    priceInputRef.current.select();
+  }, [inputtingPrice]);
 
   function handleAdd() {
     if (!descriptionInput || !dateInput || !priceInput || fileInput.length <= 0)
@@ -83,12 +95,25 @@ export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
             Total Price (Rp)
           </label>
           <input
+            ref={priceInputRef}
+            hidden={!inputtingPrice}
             type="number"
             className="w-full bg-text px-3 p-2 rounded-lg text-xs outline-none placeholder:text-gray-500"
-            placeholder="10000"
+            placeholder={"10000"}
             value={priceInput}
-            onChange={(e) => {
-              setPriceInput(e.target.value);
+            onChange={(e) => setPriceInput(e.target.value)}
+            onBlur={() => setInputtingPrice(false)}
+          />
+          <input
+            hidden={inputtingPrice}
+            type="text"
+            className="w-full bg-text px-3 p-2 rounded-lg text-xs outline-none placeholder:text-gray-500"
+            placeholder={"10000"}
+            readOnly
+            value={pricePreview}
+            onClick={() => {
+              setInputtingPrice(true);
+              priceInputRef.current.select();
             }}
           />
         </div>
@@ -113,15 +138,19 @@ export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
               Insert Image
             </label>
             <div className="bg-gray-200 rounded-lg w-[80%] mx-auto h-auto aspect-square mb-2 relative p-1">
-              <img
-                className="w-full h-full object-contain"
-                src={URL.createObjectURL(fileInput[0])}
-              />
+              {fileInput[0].type.startsWith("image") ? (
+                <img
+                  className="w-full h-full object-contain"
+                  src={URL.createObjectURL(fileInput[0])}
+                />
+              ) : (
+                <p className="text-primary">Selected: {fileInput[0].name}</p>
+              )}
               <button
                 className="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-800 rounded-lg text-white text-center text-xs"
                 onClick={() => setFileInput([])}
               >
-                Change Image
+                Remove File
               </button>
             </div>
           </>

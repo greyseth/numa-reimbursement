@@ -20,6 +20,7 @@ import Page_ReimbursementView from "./pages/ReimbursementView";
 import Page_Admin from "./pages/Admin";
 import Page_AdminForm from "./pages/AdminForm";
 import Page_AdminEdit from "./pages/AdminEdit";
+import Page_Testing from "./pages/TestPage";
 
 const router = createBrowserRouter([
   {
@@ -65,6 +66,10 @@ const router = createBrowserRouter([
   {
     path: "/auth",
     element: <Page_Auth />,
+  },
+  {
+    path: "/testing",
+    element: <Page_Testing />,
   },
   {
     path: "*",

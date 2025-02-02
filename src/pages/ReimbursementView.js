@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import request from "../util/API";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { LoadingContext } from "../providers/LoadingProvider";
 import { WarningContext } from "../providers/WarningProvider";
 import LoadingError from "../components/LoadingError";
@@ -14,7 +14,7 @@ import ApproveItemPopup from "../components/popups/popup_ApproveItem";
 import FileInput from "../components/FileInput";
 import ViewApprovalPopup from "../components/popups/popup_ViewApproval";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import RequestEditDetails from "../components/popups/popup_EditRequestDetails";
 import RequestEditItems from "../components/popups/popup_EditRequestItems";
 
@@ -23,6 +23,7 @@ export default function Page_ReimbursementView() {
   const { warning, setWarning } = useContext(WarningContext);
   const { loginData, setLoginData } = useContext(LoginContext);
   const { id_request } = useParams();
+  const navigate = useNavigate();
 
   const [detailsLoading, setDetailsLoading] = useState({
     loading: true,
@@ -50,6 +51,19 @@ export default function Page_ReimbursementView() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  async function handleDelete() {
+    setLoading({});
+
+    const response = await request("DELETE", "/requests/" + id_request);
+    if (response && response.error) return setLoading({ error: true });
+
+    setLoading({
+      complete: true,
+      message: "Successfully deleted request",
+      onComplete: () => navigate("/request"),
+    });
+  }
 
   async function handleFinanceApprove(approved) {
     setLoading({ loading: true, error: false, complete: false });
@@ -163,6 +177,7 @@ export default function Page_ReimbursementView() {
         <>
           <h2 className="font-bold w-3/4 text-md md:text-xl mb-4">
             Viewing Request {details.request.type === "petty cash" ? "PC" : "R"}
+            -NMA-{formatDate(details.request.date_created)}-
             {id_request.toString().padStart(4, "0")}
             <span
               className={`bg-${
@@ -188,11 +203,26 @@ export default function Page_ReimbursementView() {
               {details.user &&
               loginData &&
               loginData.id_user === details.user.id_user ? (
-                <FontAwesomeIcon
-                  icon={faEdit}
-                  className="text-lg cursor-pointer"
-                  onClick={() => setOpenEdit({ details: true })}
-                />
+                <>
+                  <FontAwesomeIcon
+                    icon={faEdit}
+                    className="text-lg cursor-pointer"
+                    onClick={() => setOpenEdit({ details: true })}
+                  />
+                  <FontAwesomeIcon
+                    icon={faTrash}
+                    color="red"
+                    className="text-lg cursor-pointer"
+                    onClick={() =>
+                      setWarning({
+                        message:
+                          "Are you sure you want to delete this request?",
+                        confirmDanger: true,
+                        confirmAction: handleDelete,
+                      })
+                    }
+                  />
+                </>
               ) : null}
             </div>
             <hr className="my-4 border-gray-300" />
@@ -256,10 +286,15 @@ export default function Page_ReimbursementView() {
                 {details.user.email}
               </div>
               <div>
+                <p className="font-normal text-gray-600">
+                  Requestor Access Role
+                </p>{" "}
+                {details.user.role}
+              </div>
+              <div>
                 <p className="font-normal text-gray-600">NIK Number</p>{" "}
                 {details.user.nik}
               </div>
-              <div></div>
               <div>
                 <p className="font-normal text-gray-600">Bank Name</p>{" "}
                 {details.request.bank_name}
@@ -357,7 +392,8 @@ export default function Page_ReimbursementView() {
                       </button>
                     ) : null}
                     {loginData &&
-                    loginData.role === "approver" &&
+                    loginData.role === "verification" &&
+                    loginData.id_user !== details.user.id_user &&
                     !i.approval.status ? (
                       <button
                         className="btn tertiary h-secondary inline text-xs p-1 rounded-sm text-white"
@@ -411,7 +447,9 @@ export default function Page_ReimbursementView() {
                   </button>
                 </div>
               </div>
-            ) : loginData && loginData.role === "finance" ? (
+            ) : loginData &&
+              loginData.role === "approver" &&
+              details.user.id_user !== loginData.id_user ? (
               <div className="w-full md:grid md:grid-cols-[1fr_15em] gap-12">
                 <div>
                   <textarea

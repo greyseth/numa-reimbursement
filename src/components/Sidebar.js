@@ -31,7 +31,7 @@ export default function Sidebar() {
       label: "Request Management",
       route: "/request",
       onClick: () => {},
-      requireRoles: ["user", "approver", "finance"],
+      requireRoles: ["requestor", "verification", "approver"],
     },
     {
       icon: faPerson,

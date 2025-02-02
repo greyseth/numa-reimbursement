@@ -59,10 +59,26 @@ function DesktopView({ images, selectedIndex, setSelectedIndex, setClose }) {
         </button>
       ) : null}
       <div className="w-4/5 flex flex-col items-center justify-end gap-6 overflow-y-scroll">
-        <img
-          className="w-full max-w-[500px] max-h-[80vh] h-auto"
-          src={images[selectedIndex]}
-        />
+        {!images[selectedIndex].endsWith("pdf") ? (
+          <img
+            className="w-full max-w-[500px] max-h-[80vh] h-auto"
+            src={images[selectedIndex]}
+          />
+        ) : (
+          <>
+            <p className="font-bold w-full text-center">
+              File is not a previewable image
+            </p>
+            <p className="w-full text-center text-gray-500">
+              {images[selectedIndex]}
+            </p>
+            <a href={images[selectedIndex]} target="_blank">
+              <button className="block mx-auto btn tertiary">
+                View Attachment
+              </button>
+            </a>
+          </>
+        )}
         <button
           className="p-2 rounded-lg bg-gray-700 hover:bg-gray-800 text-white"
           onClick={() => setClose(undefined)}
