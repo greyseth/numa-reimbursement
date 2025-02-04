@@ -24,4 +24,5 @@ yarn-error.log*
 .env
 /api/uploads
 api/Export.xlsx
+/api/node_modules
 Manual Penggunaan Aplikasi Reimbursement.docx
