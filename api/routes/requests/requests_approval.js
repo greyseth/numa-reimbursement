@@ -17,10 +17,10 @@ router.put("/item/:id_item", requireRoles(["verification"]), (req, res) => {
     connection.query(
       `SELECT 
       items.id_request, items_approval.status 
-    FROM items_approval 
-    LEFT JOIN items ON items.id_item = items_approval.id_item
-    LEFT JOIN requests ON requests.id_request = items.id_request
-    WHERE items_approval.id_item = ? AND requests.id_user != ?`,
+      FROM items_approval 
+      LEFT JOIN items ON items.id_item = items_approval.id_item
+      LEFT JOIN requests ON requests.id_request = items.id_request
+      WHERE items_approval.id_item = ? AND requests.id_user != ?`,
       [req.params.id_item, req.id_user],
       (err, rows, fields) => {
         if (err) return res.status(500).json({ error: err });
@@ -66,12 +66,15 @@ router.put("/payment/:id_request", requireRoles(["approver"]), (req, res) => {
   singleUpload(req, res, (err) => {
     if (err) return res.status(500).json({ error: err });
 
+    if (req.body.approved && req.body.approved !== "false" && !req.file)
+      return res.status(400).json({ error: "Approval must include image" });
+
     // Verifies that request is approved before actually updating
     connection.query(
       `
-        SELECT status FROM requests_finance 
+        SELECT requests_finance.status FROM requests_finance 
         LEFT JOIN requests ON requests.id_request = requests_finance.id_request
-        WHERE id_request = ? AND requests.id_user != ?
+        WHERE requests_finance.id_request = ? AND requests.id_user != ?
       `,
       [req.params.id_request, req.id_user],
       (err, rows, fields) => {
@@ -91,9 +94,11 @@ router.put("/payment/:id_request", requireRoles(["approver"]), (req, res) => {
           WHERE id_request = ?
           `,
           [
-            req.body.approved ? "approved" : "rejected",
+            req.body.approved && req.body.approved !== "false"
+              ? "approved"
+              : "rejected",
             req.body.notes ?? "",
-            req.file.filename,
+            req.file ? req.file.filename : "",
             req.id_user,
             req.params.id_request,
           ],
@@ -102,10 +107,13 @@ router.put("/payment/:id_request", requireRoles(["approver"]), (req, res) => {
             statusCheck(true, req.params.id_request);
 
             res.status(200).json({
-              status: req.body.approved ? "approved" : "rejected",
+              status:
+                req.body.approved && req.body.approved !== "false"
+                  ? "approved"
+                  : "rejected",
               notes: req.body.notes,
               date: new Date().toString(),
-              image: req.file.filename,
+              image: req.file ? req.file.filename : "",
               user: {},
             });
           }

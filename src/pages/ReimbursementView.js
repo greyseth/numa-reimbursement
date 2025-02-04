@@ -74,7 +74,8 @@ export default function Page_ReimbursementView() {
 
       formData.append("approved", approved);
       formData.append("notes", financeNote);
-      formData.append("image", financeFile[0]);
+      if (financeFile && financeFile.length > 0)
+        formData.append("image", financeFile[0]);
 
       const request = await fetch(
         process.env.REACT_APP_APIHOST +
@@ -346,7 +347,7 @@ export default function Page_ReimbursementView() {
 
             <div className="mb-6">
               <h2>
-                Approver Status
+                Verification Status
                 <span
                   className={`bg-${
                     details.request.status === "pending"
@@ -408,7 +409,7 @@ export default function Page_ReimbursementView() {
             </ul>
 
             <h2 className="mb-6">
-              Finance Status
+              Approver Payment Status
               <span
                 className={`bg-${
                   details.finance.status === "pending"
@@ -440,10 +441,13 @@ export default function Page_ReimbursementView() {
                 </div>
                 <div>
                   <button
+                    disabled={!details.finance.image}
                     className="btn primary full"
                     onClick={() => setFinanceViewImage(details.finance.image)}
                   >
-                    View Payment Proof
+                    {details.finance.image
+                      ? "View Payment Proof"
+                      : "No proof provided"}
                   </button>
                 </div>
               </div>

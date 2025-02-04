@@ -1,4 +1,4 @@
-import numaLogo from "../assets/img/numaLogo_transparent.png";
+import numaLogo from "../assets/img/dashboardImage.png";
 
 import { useContext, useEffect, useState } from "react";
 import {
