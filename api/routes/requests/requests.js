@@ -22,6 +22,8 @@ const collapsedQuery = `
 router.post("/search/:page_num", (req, res) => {
   let optionalChecks = [];
 
+  console.log(req.body.owner);
+
   if (req.id_role === 1)
     // USER role
     optionalChecks.push({
@@ -30,11 +32,12 @@ router.post("/search/:page_num", (req, res) => {
     });
   else if (req.id_role === 2) {
     // APPROVER role
-    optionalChecks.push({
-      clause:
-        "AND (requests.status = 'pending' OR requests.status = 'rejected' OR requests.status = 'approved')",
-      value: null,
-    });
+    if (req.body.owner === "toapprove")
+      optionalChecks.push({
+        clause:
+          "AND (requests.status = 'pending' OR requests.status = 'rejected' OR requests.status = 'approved')",
+        value: null,
+      });
 
     optionalChecks.push({
       clause:
@@ -45,10 +48,12 @@ router.post("/search/:page_num", (req, res) => {
     });
   } else if (req.id_role === 3) {
     // FINANCE role
-    optionalChecks.push({
-      clause: "AND (requests.status = 'approved' OR requests.status = 'paid')",
-      value: null,
-    });
+    if (req.body.owner === "toapprove")
+      optionalChecks.push({
+        clause:
+          "AND (requests.status = 'approved' OR requests.status = 'paid')",
+        value: null,
+      });
 
     optionalChecks.push({
       clause:

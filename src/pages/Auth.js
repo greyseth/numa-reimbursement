@@ -1,5 +1,5 @@
 import logo from "../assets/img/numaLogo_transparent.png";
-import loginBackground from "../assets/img/loginBackground.webp";
+import loginBackground from "../assets/img/loginBackground.jpg";
 
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -67,7 +67,7 @@ export default function Page_Auth() {
         <div className="lg:w-1/2 w-full flex flex-col justify-center px-8 lg:px-20 py-10">
           <img src={logo} />
 
-          <h4 className="text-gray-500 text-sm mb-2">Numa Reimbursement App</h4>
+          <h4 className="text-gray-500 text-sm mb-2">Numa Management App</h4>
           <h1 className="text-2xl lg:text-3xl font-semibold mb-2">
             Log in to your account
           </h1>
@@ -133,7 +133,7 @@ export default function Page_Auth() {
             className="w-8/12 h-full bg-cover bg-center"
             style={{
               backgroundImage: `url(${loginBackground})`,
-              backgroundPositionX: "right 10%",
+              backgroundPosition: "left",
             }}
           ></div>
         </div>
