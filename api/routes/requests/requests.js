@@ -133,7 +133,7 @@ router.post("/", (req, res) => {
           [
             req.body.title,
             req.body.description ?? "",
-            req.body.type,
+            req.body.type ?? "reimburse",
             req.id_user,
             req.body.bankNumber,
             req.body.bankName,
@@ -192,8 +192,9 @@ router.get("/yearly", requireRoles(["approver", "admin"]), (req, res) => {
         categories.category, SUM(items.price) AS amount
       FROM categories 
       LEFT JOIN items ON items.id_category = categories.id_category 
+      LEFT JOIN items_approval ON items_approval.id_item = items.id_item AND items_approval.status = 'approved'
       LEFT JOIN requests ON requests.id_request = items.id_request
-      WHERE YEAR(requests.date_created) = ? AND requests.type = 'reimburse'
+      WHERE items_approval.id_item IS NOT NULL AND YEAR(requests.date_created) = ? AND requests.type = 'reimburse'
       GROUP BY categories.id_category;
     `,
     [new Date().getFullYear()],
@@ -207,8 +208,9 @@ router.get("/yearly", requireRoles(["approver", "admin"]), (req, res) => {
             categories.category, SUM(items.price) AS amount 
           FROM categories 
           LEFT JOIN items ON items.id_category = categories.id_category 
+          LEFT JOIN items_approval ON items_approval.id_item = items.id_item AND items_approval.status = 'approved'
           LEFT JOIN requests ON requests.id_request = items.id_request
-          WHERE YEAR(requests.date_created) = ? AND requests.type = 'petty cash'
+          WHERE items_approval.id_item IS NOT NULL AND YEAR(requests.date_created) = ? AND requests.type = 'petty cash'
           GROUP BY categories.id_category;
         `,
         [new Date().getFullYear()],

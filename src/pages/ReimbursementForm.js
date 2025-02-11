@@ -123,6 +123,9 @@ export default function Page_ReimbursementForm() {
           editing={undefined}
           setItems={setItems}
           setOpenPopup={setAddItem}
+          defaultValues={{
+            description: description,
+          }}
         />
       ) : null}
 
@@ -149,7 +152,7 @@ export default function Page_ReimbursementForm() {
       </div>
 
       {/* Form Content */}
-      <label className="form-label">Request Title</label>
+      <label className="form-label">Project Based</label>
       <input
         type="text"
         className="form-input mb-4"
@@ -157,7 +160,7 @@ export default function Page_ReimbursementForm() {
         onChange={(e) => setTitle(e.target.value)}
       />
 
-      <label className="form-label">Request Description</label>
+      <label className="form-label">Project Description</label>
       <textarea
         className="form-input min-h-32 mb-4"
         value={description}

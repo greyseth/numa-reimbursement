@@ -53,12 +53,13 @@ export default function Page_ReimbursementView() {
   }, []);
 
   async function handleDelete() {
-    setLoading({});
+    setLoading({ loading: true });
 
     const response = await request("DELETE", "/requests/" + id_request);
     if (response && response.error) return setLoading({ error: true });
 
     setLoading({
+      loading: true,
       complete: true,
       message: "Successfully deleted request",
       onComplete: () => navigate("/request"),
