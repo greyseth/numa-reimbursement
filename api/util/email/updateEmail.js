@@ -29,24 +29,24 @@ function sendUpdateEmail(id_request, cb) {
 
       connection.query(
         `
-                    SELECT 
-                        users.email 
-                    FROM items_approval 
-                    LEFT JOIN items ON items.id_item = items_approval.id_item 
-                    LEFT JOIN requests ON requests.id_request = items.id_request 
-                    LEFT JOIN users ON users.id_user = items_approval.id_approver 
-                    WHERE requests.id_request = ?
-                    GROUP BY users.email 
+          SELECT 
+              users.email 
+          FROM items_approval 
+          LEFT JOIN items ON items.id_item = items_approval.id_item 
+          LEFT JOIN requests ON requests.id_request = items.id_request 
+          LEFT JOIN users ON users.id_user = items_approval.id_approver 
+          WHERE requests.id_request = ?
+          GROUP BY users.email 
 
-                    UNION 
-                    
-                    SELECT 
-                        users.email 
-                    FROM requests_finance 
-                    LEFT JOIN users ON users.id_user = requests_finance.id_finance 
-                    WHERE requests_finance.id_request = ?
-                        AND requests_finance.id_finance IS NOT NULL;
-                `,
+          UNION 
+          
+          SELECT 
+              users.email 
+          FROM requests_finance 
+          LEFT JOIN users ON users.id_user = requests_finance.id_finance 
+          WHERE requests_finance.id_request = ?
+              AND requests_finance.id_finance IS NOT NULL;
+        `,
         [id_request],
         (err, rows) => {
           if (err) {
@@ -61,32 +61,6 @@ function sendUpdateEmail(id_request, cb) {
               "Could not find emails of approvers " + id_request
             );
           }
-
-          sendEmail(
-            rows.map((r) => r.email),
-            {
-              title: data.title,
-              description: data.description ?? "(No description provided)",
-              type: data.type,
-              date_created: formatDate(data.date_created),
-              status: "pending",
-              url:
-                process.env.FRONTEND_HOSTNAME +
-                "/reimbursement/view/" +
-                id_request,
-              username: data.username,
-              email: data.email,
-              nnik: data.nik,
-            },
-            (err, info) => {
-              if (err) {
-                console.log("Failed to send email for " + id_request);
-                console.log(err);
-              }
-
-              cb();
-            }
-          );
         }
       );
     }

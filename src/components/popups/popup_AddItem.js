@@ -7,14 +7,23 @@ import FileInput from "../FileInput";
 import { verifyInput } from "../../util/verifyInput";
 import CategoryDropdown from "../CategoryDropdown";
 
-export default function Popup_AddItem({ editing, setItems, setOpenPopup }) {
+export default function Popup_AddItem({
+  editing,
+  setItems,
+  setOpenPopup,
+  defaultValues,
+}) {
   const { warning, setWarning } = useContext(WarningContext);
 
+  if (!defaultValues) defaultValues = {};
+
   const [categoryInput, setCategoryInput] = useState(undefined);
-  const [descriptionInput, setDescriptionInput] = useState("");
-  const [dateInput, setDateInput] = useState("");
-  const [priceInput, setPriceInput] = useState("");
-  const [pricePreview, setPricePreview] = useState("");
+  const [descriptionInput, setDescriptionInput] = useState(
+    defaultValues.description ?? ""
+  );
+  const [dateInput, setDateInput] = useState(defaultValues.date ?? "");
+  const [priceInput, setPriceInput] = useState(defaultValues.price ?? "");
+  const [pricePreview, setPricePreview] = useState(defaultValues.price ?? "");
   const [inputtingPrice, setInputtingPrice] = useState(false);
   const [fileInput, setFileInput] = useState([]);
 
