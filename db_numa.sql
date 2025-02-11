@@ -190,9 +190,9 @@ CREATE TABLE `roles` (
 --
 
 INSERT INTO `roles` (`id_role`, `role_name`) VALUES
-(1, 'user'),
-(2, 'approver'),
-(3, 'finance'),
+(1, 'requestor'),
+(2, 'verification'),
+(3, 'approver'),
 (4, 'admin');
 
 -- --------------------------------------------------------
