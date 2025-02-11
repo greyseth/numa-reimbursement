@@ -6,7 +6,6 @@ const helmet = require("helmet");
 const cors = require("cors");
 const authenticateToken = require("./middlewares/authenticateToken");
 const verifyRole = require("./middlewares/verifyRole");
-const { sendEmail } = require("./util/email/emailUtil");
 
 dotenv.config();
 

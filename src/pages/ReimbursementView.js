@@ -14,9 +14,15 @@ import ApproveItemPopup from "../components/popups/popup_ApproveItem";
 import FileInput from "../components/FileInput";
 import ViewApprovalPopup from "../components/popups/popup_ViewApproval";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEdit,
+  faMailBulk,
+  faMailReply,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import RequestEditDetails from "../components/popups/popup_EditRequestDetails";
 import RequestEditItems from "../components/popups/popup_EditRequestItems";
+import PayItemPopup from "../components/popups/popup_PayItem";
 
 export default function Page_ReimbursementView() {
   const { loading, setLoading } = useContext(LoadingContext);
@@ -32,12 +38,9 @@ export default function Page_ReimbursementView() {
 
   const [viewImage, setViewImage] = useState(undefined);
   const [approveItem, setApproveItem] = useState(undefined);
+  const [payItem, setPayItem] = useState(undefined);
   const [viewApproval, setViewApproval] = useState(undefined);
   const [openEdit, setOpenEdit] = useState({});
-
-  const [financeNote, setFinanceNote] = useState("");
-  const [financeFile, setFinanceFile] = useState(undefined);
-  const [financeViewImage, setFinanceViewImage] = useState(undefined);
 
   async function fetchData() {
     const response = await request("GET", "/requests/" + id_request);
@@ -53,71 +56,33 @@ export default function Page_ReimbursementView() {
   }, []);
 
   async function handleDelete() {
-    setLoading({});
+    setLoading({ loading: true });
 
     const response = await request("DELETE", "/requests/" + id_request);
     if (response && response.error) return setLoading({ error: true });
 
     setLoading({
+      loading: true,
       complete: true,
       message: "Successfully deleted request",
       onComplete: () => navigate("/request"),
     });
   }
 
-  async function handleFinanceApprove(approved) {
-    setLoading({ loading: true, error: false, complete: false });
+  async function handleNotify() {
+    setLoading({ loading: true });
 
-    try {
-      // Manual form and request creation because of images
-      let formData = new FormData();
+    const response = await request(
+      "GET",
+      "/requests/approve/notify/" + id_request
+    );
+    if (response && response.error) return setLoading({ error: true });
 
-      formData.append("approved", approved);
-      formData.append("notes", financeNote);
-      if (financeFile && financeFile.length > 0)
-        formData.append("image", financeFile[0]);
-
-      const request = await fetch(
-        process.env.REACT_APP_APIHOST +
-          "/requests/approve/payment/" +
-          id_request,
-        {
-          method: "PUT",
-          body: formData,
-          headers: {
-            authorization:
-              "Bearer " + window.localStorage.getItem("auth_token"),
-          },
-        }
-      );
-
-      if (request.ok) {
-        const response = await request.json();
-
-        setLoading({
-          loading: true,
-          complete: true,
-          onComplete: () => {
-            setDetails({
-              ...details,
-              finance: {
-                ...response,
-                user: {
-                  username: loginData.username,
-                  email: loginData.email,
-                },
-              },
-            });
-          },
-        });
-      } else {
-        console.log(request);
-        setLoading({ loading: true, error: true });
-      }
-    } catch (err) {
-      console.log(err);
-      setLoading({ error: true });
-    }
+    setLoading({
+      loading: true,
+      complete: true,
+      message: "Successfully notified requestor",
+    });
   }
 
   return (
@@ -132,11 +97,11 @@ export default function Page_ReimbursementView() {
         />
       )}
 
-      {financeViewImage === undefined ? null : (
-        <ImageViewer
-          images={[process.env.REACT_APP_APIHOST + "/img/" + financeViewImage]}
-          imageIndex={0}
-          setClose={setFinanceViewImage}
+      {payItem === undefined ? null : (
+        <PayItemPopup
+          id_item={payItem}
+          setDetails={setDetails}
+          setClose={setPayItem}
         />
       )}
 
@@ -342,33 +307,34 @@ export default function Page_ReimbursementView() {
           <div className="bg-gray-200 border rounded-lg p-6 mb-8">
             <h2 className="font-semibold text-xl mb-4 text-black">
               Request Approval Status
+              <span
+                className={`bg-${
+                  details.request.status === "pending"
+                    ? "yellow"
+                    : details.request.status === "approved" ||
+                      details.request.status === "paid"
+                    ? "blue"
+                    : "red"
+                }-500 p-2 ml-4 rounded-full font-bold text-white`}
+              >
+                {(details.request.status === "paid"
+                  ? "approved"
+                  : details.request.status
+                ).toUpperCase()}
+              </span>
             </h2>
             <hr className="my-4 border-gray-300" />
 
             <div className="mb-6">
-              <h2>
-                Verification Status
-                <span
-                  className={`bg-${
-                    details.request.status === "pending"
-                      ? "yellow"
-                      : details.request.status === "approved" ||
-                        details.request.status === "paid"
-                      ? "blue"
-                      : "red"
-                  }-500 p-2 ml-4 rounded-full font-bold text-white`}
-                >
-                  {(details.request.status === "paid"
-                    ? "approved"
-                    : details.request.status
-                  ).toUpperCase()}
-                </span>
-              </h2>
+              <h2>Verification Status</h2>
             </div>
 
             <ul className="list-none max-h-64 mb-6 overflow-y-scroll overflow-x-scroll rounded-lg">
               {details.items.map((i) => (
-                <li className="min-w-full w-fit p-2 bg-primary text-white flex items-center rounded-lg justify-between [&:not(:last-child)]:mb-3">
+                <li
+                  className="min-w-full w-fit p-2 bg-primary text-white flex items-center rounded-lg justify-between [&:not(:last-child)]:mb-3"
+                  key={i.id_item}
+                >
                   <p className="basis-0 grow w-full min-w-64">{i.name}</p>
                   <div className="space-x-3 min-w-40">
                     <span
@@ -408,100 +374,93 @@ export default function Page_ReimbursementView() {
               ))}
             </ul>
 
-            <h2 className="mb-6">
-              Approver Payment Status
-              <span
-                className={`bg-${
-                  details.finance.status === "pending"
-                    ? "yellow"
-                    : details.finance.status === "approved"
-                    ? "blue"
-                    : details.finance.status === "paid"
-                    ? "green"
-                    : "red"
-                }-500 p-2 ml-4 rounded-full font-bold text-white`}
-              >
-                {details.finance.status.toUpperCase()}
-              </span>
-            </h2>
+            <hr className="my-4 border-gray-300" />
 
-            {details.finance.status !== "pending" ? (
-              <div className="w-full lg:grid lg:grid-cols-[1fr_15em] gap-12">
-                <div className="text-sm mb-4 lg:mb-0">
-                  <textarea
-                    className="w-full rounded-lg outline-none p-2 h-24 resize-y"
-                    placeholder="No notes provided"
-                    readOnly
-                  ></textarea>
-                  <p>
-                    {details.finance.status.toUpperCase()} by{" "}
-                    {details.finance.user.username}
-                  </p>
-                  <p>on {formatDate(details.finance.date)}</p>
-                </div>
-                <div>
-                  <button
-                    disabled={!details.finance.image}
-                    className="btn primary full"
-                    onClick={() => setFinanceViewImage(details.finance.image)}
-                  >
-                    {details.finance.image
-                      ? "View Payment Proof"
-                      : "No proof provided"}
-                  </button>
-                </div>
-              </div>
-            ) : loginData &&
-              loginData.role === "approver" &&
-              details.user.id_user !== loginData.id_user ? (
-              <div className="w-full md:grid md:grid-cols-[1fr_15em] gap-12">
-                <div>
-                  <textarea
-                    className="w-full rounded-lg outline-none p-2 h-24 resize-y mb-3"
-                    placeholder="Add notes for approval"
-                    value={financeNote}
-                    onChange={(e) => setFinanceNote(e.target.value)}
-                  ></textarea>
-                  {financeFile ? (
-                    <>
-                      <div className="flex items-center justify-between gap-6 mb-2">
-                        <p className="basis-0 grow w-full">
-                          {financeFile[0].name}
-                        </p>
-                        <button
-                          className="btn primary"
-                          onClick={() => setFinanceFile(undefined)}
+            <div className="mb-6">
+              <h2>Approver Status</h2>
+            </div>
+
+            <ul className="list-none max-h-64 mb-6 overflow-y-scroll overflow-x-scroll rounded-lg">
+              {details.items.filter(
+                (i) =>
+                  Object.keys(i.approval).length > 0 &&
+                  i.approval.status !== "rejected"
+              ).length > 0 ? (
+                details.items
+                  .filter(
+                    (i) =>
+                      Object.keys(i.approval).length > 0 &&
+                      i.approval.status !== "rejected"
+                  )
+                  .map((i) => (
+                    <li
+                      className="min-w-full w-fit p-2 bg-primary text-white flex items-center rounded-lg justify-between [&:not(:last-child)]:mb-3"
+                      key={i.id_item}
+                    >
+                      <p className="basis-0 grow w-full min-w-64">{i.name}</p>
+                      <div className="space-x-3 min-w-40">
+                        <span
+                          className={`bg-${
+                            i.payment.status
+                              ? i.payment.status === "approved"
+                                ? "yellow"
+                                : i.payment.status === "paid"
+                                ? "green"
+                                : "red"
+                              : ""
+                          }-500 p-1 text-xs ml-4 rounded-full font-bold text-white my-auto inline`}
                         >
-                          Change
-                        </button>
+                          {i.payment.status
+                            ? i.payment.status === "approved"
+                              ? "PENDING"
+                              : i.payment.status.toUpperCase()
+                            : null}
+                        </span>
+                        {i.payment.status && i.payment.status !== "approved" ? (
+                          <button
+                            className="btn secondary h-tertiary rounded-full text-xs p-1"
+                            onClick={() => setViewApproval(i.payment)}
+                          >
+                            Details
+                          </button>
+                        ) : null}
+                        {loginData &&
+                        loginData.role === "approver" &&
+                        loginData.id_user !== details.user.id_user &&
+                        i.payment.status === "approved" ? (
+                          <button
+                            className="btn tertiary h-secondary inline text-xs p-1 rounded-sm text-white"
+                            onClick={() => setPayItem(i.id_item)}
+                          >
+                            CHANGE
+                          </button>
+                        ) : null}
                       </div>
-                      <img
-                        src={URL.createObjectURL(financeFile[0])}
-                        className="w-full h-auto mb-8 md:mb-0"
-                      />
-                    </>
-                  ) : (
-                    <FileInput setValue={setFinanceFile} singleFile={true} />
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <button
-                    className="btn green full"
-                    onClick={() => handleFinanceApprove(true)}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="btn red full"
-                    onClick={() => handleFinanceApprove(false)}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p>Pending finance review</p>
-            )}
+                    </li>
+                  ))
+              ) : (
+                <p className="w-full text-center">Awaiting item verification</p>
+              )}
+            </ul>
+
+            {loginData && loginData.role === "approver" ? (
+              <button
+                className="btn primary"
+                onClick={() =>
+                  setWarning({
+                    message: "Are you sure you want to notify the requestor?",
+                    confirmAction: () => handleNotify(),
+                  })
+                }
+              >
+                <FontAwesomeIcon
+                  icon={faMailBulk}
+                  color="white"
+                  className="mr-2"
+                />{" "}
+                Notify Requestor
+              </button>
+            ) : null}
           </div>
         </>
       )}

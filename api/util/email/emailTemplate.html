@@ -42,7 +42,18 @@
         </tr>
         <tr>
           <td><p style="color: gray">Description</p></td>
-          <td><p>$description$</p></td>
+          <td>
+            <textarea
+              style="
+                width: 100%;
+                background-color: transparent;
+                border: none;
+                font-size: 1.2em;
+              "
+            >
+$description$
+            </textarea>
+          </td>
         </tr>
         <tr>
           <td><p style="color: gray">Payment Type</p></td>
@@ -50,13 +61,37 @@
         </tr>
         <tr>
           <td><p style="color: gray">Date Created</p></td>
-          <td><p>$date_created$</p></td>
+          <td>
+            <p>$date_created$</p>
+          </td>
         </tr>
         <tr>
           <td><p style="color: gray">Current Status</p></td>
           <td><p>$status$</p></td>
         </tr>
       </table>
+    </div>
+
+    <div
+      style="
+        background-color: #f9fafc;
+        border: 1px solid gray;
+        border-radius: 10px;
+        padding: 1em;
+        margin-bottom: 2em;
+      "
+    >
+      <div
+        style="
+          padding-bottom: 1em;
+          border-bottom: 1px solid gray;
+          margin-bottom: 1em;
+        "
+      >
+        <h2>Item Approval Status</h2>
+      </div>
+      $items$
+      <table width="100%" style="margin-bottom: 2em"></table>
     </div>
 
     <!-- <div
@@ -171,7 +206,8 @@ $realisasi_catatan$</textarea
           </td>
         </tr>
       </table>
-    </div> -->
+    </div>
+    -->
 
     <a href="$url$" style="text-decoration: none">
       <button
