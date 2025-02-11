@@ -22,8 +22,6 @@ const collapsedQuery = `
 router.post("/search/:page_num", (req, res) => {
   let optionalChecks = [];
 
-  console.log(req.body.owner);
-
   if (req.id_role === 1)
     // USER role
     optionalChecks.push({
@@ -280,15 +278,11 @@ router.get("/:id_request", (req, res) => {
         requests.*, SUM(items.price) AS total_price, 
         users.id_user AS requestor_id, users.username AS requestor_name, 
         users.email AS requestor_email, users.nik AS requestor_nik, users.active AS requestor_active,
-        roles.role_name,
-        finance_app.status AS finance_status, finance_app.notes AS finance_notes, finance_app.approval_date AS finance_date, finance_app.filename AS finance_image,
-        finance.username AS finance_name, finance.email AS finance_email
+        roles.role_name
       FROM requests
       LEFT JOIN users ON users.id_user = requests.id_user
       LEFT JOIN roles ON roles.id_role = users.id_role
       LEFT JOIN items ON items.id_request = requests.id_request
-      LEFT JOIN requests_finance finance_app ON finance_app.id_request = requests.id_request
-      LEFT JOIN users finance ON finance.id_user = finance_app.id_finance
       WHERE requests.id_request = ?
       GROUP BY requests.id_request
       LIMIT 1;
@@ -314,30 +308,20 @@ router.get("/:id_request", (req, res) => {
         role: rows[0].role_name,
       };
 
-      let financeApproval = {
-        status: rows[0].finance_status,
-      };
-
-      if (financeApproval.status !== "pending") {
-        financeApproval.notes = rows[0].finance_notes;
-        financeApproval.date = rows[0].finance_date;
-        financeApproval.image = rows[0].finance_image;
-        financeApproval.user = {
-          username: rows[0].finance_name,
-          email: rows[0].finance_email,
-        };
-      }
-
       connection.query(
         `
           SELECT 
             items.*, 
             categories.*,
             app.status AS approval_status, app.notes AS approval_notes, app.approval_date, app.file,
-            users.username AS approval_username
+            app_user.username AS approval_username,
+            app_finance.status AS finance_status, app_finance.notes AS finance_notes, app_finance.approval_date AS finance_date, app_finance.file AS finance_file,
+            fin_user.username AS finance_username
           FROM items 
           LEFT JOIN items_approval app ON app.id_item = items.id_item
-          LEFT JOIN users ON users.id_user = app.id_approver
+          LEFT JOIN items_finance app_finance ON app_finance.id_item = items.id_item
+          LEFT JOIN users app_user ON app_user.id_user = app.id_approver
+          LEFT JOIN users fin_user ON fin_user.id_user = app_finance.id_finance
           LEFT JOIN categories ON categories.id_category = items.id_category
           WHERE items.id_request = ? GROUP BY items.id_item;
         `,
@@ -345,40 +329,55 @@ router.get("/:id_request", (req, res) => {
         (err, rows, fields) => {
           if (err) return res.status(500).json({ error: err });
 
+          const items = rows.map((r) => {
+            let rCopy = {
+              ...r,
+              category: {
+                id_category: r.id_category,
+                category: r.category,
+              },
+              date: r.date_purchased,
+              image: r.filename,
+            };
+
+            delete rCopy.date_purchased;
+            delete rCopy.filename;
+
+            let approval = {};
+            if (rCopy.approval_status !== "pending") {
+              approval.status = rCopy.approval_status;
+              approval.notes = rCopy.approval_notes;
+              approval.date = rCopy.approval_date;
+              approval.approver = rCopy.approval_username;
+              approval.file = rCopy.file;
+            }
+
+            let payment = {};
+            if (rCopy.approval_status !== "pending") {
+              payment.status = rCopy.finance_status;
+              payment.notes = rCopy.finance_notes;
+              payment.date = rCopy.finance_date;
+              payment.approver = rCopy.finance_username;
+              payment.file = rCopy.finance_file;
+            }
+
+            delete rCopy.approval_status;
+            delete rCopy.approval_notes;
+            delete rCopy.approval_date;
+            delete rCopy.approval_username;
+
+            delete rCopy.finance_status;
+            delete rCopy.finance_notes;
+            delete rCopy.finance_date;
+            delete rCopy.finance_username;
+
+            return { ...rCopy, approval: approval, payment: payment };
+          });
+
           res.status(200).json({
             request: requestDetails,
             user: userDetails,
-            finance: financeApproval,
-            items: rows.map((r) => {
-              let rCopy = {
-                ...r,
-                category: {
-                  id_category: r.id_category,
-                  category: r.category,
-                },
-                date: r.date_purchased,
-                image: r.filename,
-              };
-
-              delete rCopy.date_purchased;
-              delete rCopy.filename;
-
-              let approval = {};
-              if (rCopy.approval_status !== "pending") {
-                approval.status = rCopy.approval_status;
-                approval.notes = rCopy.approval_notes;
-                approval.date = rCopy.approval_date;
-                approval.approver = rCopy.approval_username;
-                approval.file = rCopy.file;
-              }
-
-              delete rCopy.approval_status;
-              delete rCopy.approval_notes;
-              delete rCopy.approval_date;
-              delete rCopy.approval_username;
-
-              return { ...rCopy, approval: approval };
-            }),
+            items: items,
           });
         }
       );

@@ -1,70 +1,68 @@
-# Getting Started with Create React App
+# Numpak Mabur Reimbursement Application
+NUMA reimbursement web app built with [React](https://react.dev) and [Express](https://expressjs.org)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Features
+- User reimbursement form submission
+- Reimbursement approval by management
+- Finance approval
+- Yearly summary data
+- Reimbursement Excel file export
 
-## Available Scripts
+## Installation
 
-In the project directory, you can run:
+### Prerequisites
+Ensure you have the following installed:
 
-### `npm start`
+- [Node.js](https://nodejs.org/)
+- [npm](https://www.npmjs.com/)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Setup
+1. Clone the repository
+  ```
+  > git clone https://github.com/greyseth/numa-reimbursement.git
+  > cd numa-reimbursement
+  ```
+2. Database import
+  - Create new MySQL database
+    ```mysql> CREATE DATABASE db_numa;```
+  - Import database file (included in repository)
+    ```mysql> -u USERNAME -p db_numa < db_numa.sql```
+3. Install dependencies (for application and API)
+  ```
+  > npm install
+  > cd api
+  > npm install
+  ```
+4. Create environment variable files
+  - For API:
+    Go to the ``/api`` folder and create a file named ``.env``, with the following values
+    ```
+    TOKEN_SECRET=(Custom JWT token secret for authorization)
+    DB_HOST=(database host address)
+    DB_USER=(MySQL database username)
+    DB_NAME=(MySQL database name)
+    FRONTEND_HOSTNAME=(Public host address for application front end)
+    BACKEND_HOSTNAME=(Public host address for API)
+    ```
+  - For application:
+    Create a file named ``.env`` on the root folder, with the following values
+    ```
+    REACT_APP_APIHOST=(Public host address for API)
+    ```
+5. Create ``/uploads`` folder for API  
+  In the ``/api`` folder, create a folder named ``/uploads`` before running the API (used for storing uploaded files)  
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+6. Start API server
+  ```
+  > cd api
+  > node index.js
+  ```
+7. Start application development server
+  ```
+  > cd ../
+  > npm run start
+  ```
+8. Build application for deployment
+  ```
+  > npm run build
+  ```
