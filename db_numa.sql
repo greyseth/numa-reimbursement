@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 29, 2025 at 12:21 PM
+-- Generation Time: Feb 11, 2025 at 05:32 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -85,7 +85,8 @@ CREATE TABLE `items_approval` (
   `id_approver` int(10) UNSIGNED DEFAULT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `notes` text DEFAULT NULL,
-  `approval_date` date DEFAULT NULL
+  `approval_date` date DEFAULT NULL,
+  `file` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -97,18 +98,18 @@ DECLARE approved_count INT;
 DECLARE rejected_count INT;    
 DECLARE total_count INT;    
 
--- Count the statuses of all items for the related request    
+
 SELECT SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END), SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END), COUNT(*) 
 INTO approved_count, rejected_count, total_count 
 FROM items_approval
 JOIN items ON items.id_item = items_approval.id_item
 WHERE items.id_request = (SELECT id_request FROM items WHERE id_item = NEW.id_item);
 
--- Update the request's status based on the conditions
-IF rejected_count > 0 THEN
-    UPDATE requests SET status = 'rejected' WHERE id_request = (SELECT id_request FROM items WHERE id_item = NEW.id_item);
-ELSEIF approved_count = total_count THEN
+
+IF approved_count > 0 THEN
     UPDATE requests SET status = 'approved' WHERE id_request = (SELECT id_request FROM items WHERE id_item = NEW.id_item);
+ELSEIF rejected_count > 0 AND approved_count < 1 THEN
+    UPDATE requests SET status = 'rejected' WHERE id_request = (SELECT id_request FROM items WHERE id_item = NEW.id_item);
 ELSE
     UPDATE requests SET status = 'pending' WHERE id_request = (SELECT id_request FROM items WHERE id_item = NEW.id_item);
 END IF;
@@ -307,7 +308,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_user` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Constraints for dumped tables
