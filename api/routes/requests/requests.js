@@ -189,7 +189,7 @@ router.get("/yearly", requireRoles(["approver", "admin"]), (req, res) => {
       SELECT 
         categories.category, SUM(items.price) AS amount
       FROM categories 
-      LEFT JOIN items ON items.id_category = categories.id_category
+      LEFT JOIN items ON items.id_category = categories.id_category 
       LEFT JOIN items_approval ON items_approval.id_item = items.id_item AND items_approval.status = 'approved'
       LEFT JOIN requests ON requests.id_request = items.id_request
       WHERE items_approval.id_item IS NOT NULL AND YEAR(requests.date_created) = ? AND requests.type = 'reimburse'
