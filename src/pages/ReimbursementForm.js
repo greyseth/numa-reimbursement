@@ -27,7 +27,7 @@ export default function Page_ReimbursementForm() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("transfer");
+  const [type, setType] = useState("reimburse");
   const [bankNumber, setBankNumber] = useState("");
   const [bankName, setBankName] = useState("");
   const [items, setItems] = useState([]);
