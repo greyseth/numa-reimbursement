@@ -52,7 +52,7 @@ router.post(
             createReport(
               requests.map((r) => ({
                 ...r,
-                id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+                id_request: `R-NMA-${formatDate(r.date_created)}-${r.id_request
                   .toString()
                   .padStart(4, "0")}`,
                 date_created: formatDate(r.date_created),
@@ -122,7 +122,7 @@ router.post(
             createReport(
               requests.map((r) => ({
                 ...r,
-                id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+                id_request: `R-NMA-${formatDate(r.date_created)}-${r.id_request
                   .toString()
                   .padStart(4, "0")}`,
                 date_created: formatDate(r.date_created),
@@ -188,7 +188,7 @@ router.post("/all", requireRoles(["approver"]), (req, res) => {
           createReport(
             requests.map((r) => ({
               ...r,
-              id: `R-NMA-${formatDate(r.date_created)}-${r.id_request
+              id_request: `R-NMA-${formatDate(r.date_created)}-${r.id_request
                 .toString()
                 .padStart(4, "0")}`,
               date_created: formatDate(r.date_created),
